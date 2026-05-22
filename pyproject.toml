@@ -1,0 +1,11 @@
+[project]
+name = "fast-gathr"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.136.1",
+    "psycopg2-binary>=2.9.12",
+    "sqlmodel>=0.0.38",
+]
