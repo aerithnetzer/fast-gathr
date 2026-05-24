@@ -107,6 +107,18 @@ class Concepts(SQLModel, table=True):
     included_concepts: str = Field(max_length=128)
 
 
+class OccurrenceTable(SQLModel, table=True):
+    pass
+
+
+class ChatDumpTable(SQLModel, table=True):
+    pass
+
+
+class MetadataTable(SQLModel, table=True):
+    pass
+
+
 postgres_url = "postgresql://127.0.0.1:5432"
 engine = create_engine(postgres_url, echo=True)
 SQLModel.metadata.create_all(engine)
