@@ -12,7 +12,7 @@ jobs:
   deploy:
     name: Build → Push → Deploy
     runs-on: ubuntu-latest
-    environment: Fastr-Envionment
+    environment: Fastr-Environment
     permissions:
       contents: read
 
