@@ -240,11 +240,12 @@ def create_person(
     return person
 
 
-@app.get("/persons/{persons_id}")
-def get_person(person: Person, session: SessionDep):
-    # NOTE: pre-existing bug — this incorrectly writes instead of reading.
-    # Out of scope for the auth PR per project decision.
-    session.add(person)
-    session.commit()
-    session.refresh(person)
+@app.get("/persons/{person_id}")
+def get_person(person_id: str, session: SessionDep) -> Person:
+    person = session.get(Person, person_id)
+    if person is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Person not found",
+        )
     return person
