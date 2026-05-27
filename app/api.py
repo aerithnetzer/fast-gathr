@@ -2,10 +2,11 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Field, Session, SQLModel, create_engine, select
+import os
 
 from db import Person
 
-postgres_url = "postgresql://127.0.0.1:5432"
+postgres_url = os.getenv("DATABASE_URL", "postgresql://postgres:admin@db:5432/postgres")
 engine = create_engine(postgres_url, echo=True)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

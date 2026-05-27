@@ -1,6 +1,30 @@
-from sqlmodel import Field, SQLModel, create_engine
+from typing import Any
+
+from pydantic.types import Json
+from sqlmodel import JSON, Column, Field, SQLModel, create_engine
 from datetime import date
 
+class MasterVocabularyList(SQLModel, table=True):
+    id: str = Field(max_length=8, primary_key=True)
+    headword: str = Field(max_length=256)
+    trigger: str = Field()
+    form: str = Field(max_length=256)
+    classifications: str = Field(max_length=256)
+    notes: str = Field(max_length=1024)
+
+class Mentions(SQLModel, table=True):
+    id: str = Field(max_length=8, primary_key=True)
+    headword: str = Field(max_length=256)
+    form: str = Field(max_length=256)
+    classifications: str = Field(max_length=256)
+    notes: str = Field(max_length=1024)
+
+class Ocurrences(SQLModel, table=True):
+    id: str = Field(max_length=8, primary_key=True)
+    headword: str = Field(max_length=256)
+    form: str = Field(max_length=256)
+    classifications: str = Field(max_length=256)
+    notes: str = Field(max_length=1024)
 
 class Occupation(SQLModel, table=True):
     id: str = Field(max_length=8, primary_key=True)
@@ -39,6 +63,11 @@ class Person(SQLModel, table=True):
     notes: str = Field(default="")
     subscription: str = Field(max_length=1)
 
+class Entity(SQLModel, table=True):
+    id: str = Field(max_length=8, primary_key=True)
+    headword: str = Field(max_length=256)
+    form: str = Field(max_length=120)
+    extra_data: dict[str, Any] = Field(sa_column=Column(JSON))
 
 class Relationship(SQLModel, table=True):
     id: str = Field(max_length=8, primary_key=True)
@@ -107,18 +136,20 @@ class Concepts(SQLModel, table=True):
     included_concepts: str = Field(max_length=128)
 
 
-class OccurrenceTable(SQLModel, table=True):
-    pass
+# class OccurrenceTable(SQLModel, table=True):
+#     pass
+#
+#
+# class ChatDumpTable(SQLModel, table=True):
+#     pass
+#
+#
+# class MetadataTable(SQLModel, table=True):
+#     pass
 
 
-class ChatDumpTable(SQLModel, table=True):
-    pass
+import os
 
-
-class MetadataTable(SQLModel, table=True):
-    pass
-
-
-postgres_url = "postgresql://127.0.0.1:5432"
+postgres_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/postgres")
 engine = create_engine(postgres_url, echo=True)
 SQLModel.metadata.create_all(engine)
