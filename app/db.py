@@ -2,7 +2,32 @@ from typing import Any
 
 from pydantic.types import Json
 from sqlmodel import JSON, Column, Field, SQLModel, create_engine
-from datetime import date
+from datetime import date, datetime
+
+
+class User(SQLModel, table=True):
+    """Authenticated user. Created either via the bootstrap mechanism on first
+    startup or via POST /users/ by an admin."""
+    id: int | None = Field(default=None, primary_key=True)
+    username: str = Field(unique=True, index=True, max_length=64)
+    hashed_password: str = Field(max_length=256)
+    is_active: bool = Field(default=True)
+    is_admin: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ApiToken(SQLModel, table=True):
+    """Long-lived API token issued by a user, typically delegated to an AI
+    agent or other service. The plaintext token is shown only once at
+    creation; only its hash is stored."""
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    token_hash: str = Field(unique=True, index=True, max_length=128)
+    name: str = Field(max_length=128)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_used_at: datetime | None = Field(default=None)
+    revoked_at: datetime | None = Field(default=None)
+
 
 class MasterVocabularyList(SQLModel, table=True):
     id: str = Field(max_length=8, primary_key=True)

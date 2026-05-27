@@ -8,4 +8,6 @@ dependencies = [
     "fastapi[standard]>=0.136.1",
     "psycopg2-binary>=2.9.12",
     "sqlmodel>=0.0.38",
+    "pyjwt>=2.10",
+    "passlib[bcrypt]>=1.7.4",
 ]

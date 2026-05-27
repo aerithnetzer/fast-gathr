@@ -44,8 +44,9 @@ jobs:
       - name: Terraform apply (ECR only)
         working-directory: infra
         env:
-          TF_VAR_image_tag:   ${{ github.sha }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_image_tag:                ${{ github.sha }}
+          TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
+          TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: terraform apply -auto-approve -target=aws_ecr_repository.app
 
       # ── 5b. Create ACM cert (no-op if already exists) ────────────────────────
@@ -56,8 +57,9 @@ jobs:
       - name: Terraform apply (ACM cert only)
         working-directory: infra
         env:
-          TF_VAR_image_tag:   ${{ github.sha }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_image_tag:                ${{ github.sha }}
+          TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
+          TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: terraform apply -auto-approve -target=aws_acm_certificate.api
 
       - name: Show ACM DNS validation records
@@ -85,12 +87,14 @@ jobs:
           echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
 
       # ── 8. Terraform apply (full) ─────────────────────────────────────────────
-      # db_password is passed as a secret so it never appears in logs or state.
+      # Sensitive values are passed as TF_VAR_* env vars so they never appear
+      # in logs or state files.
       - name: Terraform apply
         working-directory: infra
         env:
-          TF_VAR_image_tag:   ${{ github.sha }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_image_tag:                ${{ github.sha }}
+          TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
+          TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: terraform apply -auto-approve
 
       # ── 8. Force new ECS deployment ──────────────────────────────────────────

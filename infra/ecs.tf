@@ -54,11 +54,26 @@ resource "aws_ecs_task_definition" "app" {
         }
       ]
 
-      # Inject DATABASE_URL from Secrets Manager at task startup.
+      # Inject secrets from Secrets Manager at task startup.
       secrets = [
         {
           name      = "DATABASE_URL"
           valueFrom = aws_secretsmanager_secret.database_url.arn
+        },
+        {
+          name      = "JWT_SECRET_KEY"
+          valueFrom = aws_secretsmanager_secret.jwt_secret.arn
+        },
+        {
+          name      = "BOOTSTRAP_ADMIN_PASSWORD"
+          valueFrom = aws_secretsmanager_secret.bootstrap_admin_password.arn
+        }
+      ]
+
+      environment = [
+        {
+          name  = "BOOTSTRAP_ADMIN_USERNAME"
+          value = var.bootstrap_admin_username
         }
       ]
 

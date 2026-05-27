@@ -112,6 +112,20 @@ variable "db_password" {
   sensitive   = true
 }
 
+# ── Auth ─────────────────────────────────────────────────────────────────────
+
+variable "bootstrap_admin_username" {
+  description = "Username for the initial admin user. Created on first startup if no admin exists yet."
+  type        = string
+  default     = "admin"
+}
+
+variable "bootstrap_admin_password" {
+  description = "Password for the initial admin user. Stored in Secrets Manager — never committed."
+  type        = string
+  sensitive   = true
+}
+
 # ── DNS / TLS ────────────────────────────────────────────────────────────────
 
 variable "api_domain" {

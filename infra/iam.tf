@@ -22,12 +22,16 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_managed" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Allow the execution role to read the DATABASE_URL secret.
+# Allow the execution role to read every secret used by the task.
 data "aws_iam_policy_document" "secrets_read" {
   statement {
-    effect    = "Allow"
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.database_url.arn]
+    effect  = "Allow"
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.database_url.arn,
+      aws_secretsmanager_secret.jwt_secret.arn,
+      aws_secretsmanager_secret.bootstrap_admin_password.arn,
+    ]
   }
 }
 
