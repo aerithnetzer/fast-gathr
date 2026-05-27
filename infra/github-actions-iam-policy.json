@@ -15,16 +15,26 @@
       "Sid": "ECRPush",
       "Effect": "Allow",
       "Action": [
+        "ecr:CreateRepository",
+        "ecr:DeleteRepository",
         "ecr:BatchCheckLayerAvailability",
         "ecr:CompleteLayerUpload",
         "ecr:DescribeRepositories",
         "ecr:GetDownloadUrlForLayer",
+        "ecr:GetLifecyclePolicy",
+        "ecr:GetRepositoryPolicy",
         "ecr:InitiateLayerUpload",
+        "ecr:ListImages",
+        "ecr:ListTagsForResource",
         "ecr:PutImage",
+        "ecr:PutImageScanningConfiguration",
+        "ecr:PutLifecyclePolicy",
+        "ecr:SetRepositoryPolicy",
+        "ecr:TagResource",
         "ecr:UploadLayerPart",
         "ecr:BatchGetImage",
         "ecr:DescribeImages",
-        "ecr:PutLifecyclePolicy"
+        "ecr:DescribeImageScanFindings"
       ],
       "Resource": "arn:aws:ecr:us-east-1:*:repository/fast-gathr"
     },
