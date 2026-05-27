@@ -20,7 +20,7 @@ resource "aws_lb_target_group" "app" {
   target_type = "ip" # required for Fargate
 
   health_check {
-    path                = "/"
+    path                = "/health"
     protocol            = "HTTP"
     healthy_threshold   = 2
     unhealthy_threshold = 3

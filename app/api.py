@@ -22,6 +22,11 @@ SessionDep = Annotated[Session, Depends(get_session)]
 app = FastAPI()
 
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 @app.post("/persons/")
 def create_person(person: Person, session: SessionDep):
     session.add(person)
