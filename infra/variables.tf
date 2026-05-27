@@ -111,3 +111,11 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+# ── DNS / TLS ────────────────────────────────────────────────────────────────
+
+variable "api_domain" {
+  description = "Public DNS name for the API (e.g. api.gathrlab.org)."
+  type        = string
+  default     = "api.gathrlab.org"
+}

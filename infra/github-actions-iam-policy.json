@@ -230,6 +230,22 @@
     },
 
     {
+      "Sid": "ACM",
+      "Effect": "Allow",
+      "Action": [
+        "acm:RequestCertificate",
+        "acm:DescribeCertificate",
+        "acm:ListCertificates",
+        "acm:DeleteCertificate",
+        "acm:AddTagsToCertificate",
+        "acm:RemoveTagsFromCertificate",
+        "acm:ListTagsForCertificate",
+        "acm:GetCertificate"
+      ],
+      "Resource": "*"
+    },
+
+    {
       "Sid": "TerraformStateS3",
       "Effect": "Allow",
       "Action": [

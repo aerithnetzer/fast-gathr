@@ -32,3 +32,23 @@ output "vpc_id" {
   description = "ID of the created VPC."
   value       = aws_vpc.main.id
 }
+
+# ── ACM DNS Validation ────────────────────────────────────────────────────────
+# After the first `terraform apply`, create these CNAME records in Cloudflare
+# (DNS only / grey cloud) so ACM can validate ownership of the domain.
+
+output "acm_validation_records" {
+  description = "CNAME records to create in Cloudflare for ACM DNS validation."
+  value = {
+    for dvo in aws_acm_certificate.api.domain_validation_options : dvo.domain_name => {
+      name  = dvo.resource_record_name
+      type  = dvo.resource_record_type
+      value = dvo.resource_record_value
+    }
+  }
+}
+
+output "api_domain" {
+  description = "Public API domain — point a CNAME from this to the ALB DNS name."
+  value       = var.api_domain
+}
