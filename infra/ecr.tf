@@ -1,3 +1,8 @@
+import {
+  to = aws_ecr_repository.app
+  id = "fast-gathr"
+}
+
 resource "aws_ecr_repository" "app" {
   name                 = var.app_name
   image_tag_mutability = "MUTABLE"

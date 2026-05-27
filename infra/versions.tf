@@ -8,14 +8,11 @@ terraform {
     }
   }
 
-  # Uncomment and configure to store state remotely (recommended for teams):
-  # backend "s3" {
-  #   bucket         = "your-terraform-state-bucket"
-  #   key            = "fast-gathr/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   dynamodb_table = "terraform-locks"
-  #   encrypt        = true
-  # }
+  backend "s3" {
+    bucket = "fast-gathr-tfstate"
+    key    = "fast-gathr/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
