@@ -5,7 +5,7 @@
 # To populate manually (first-time setup):
 #   aws secretsmanager put-secret-value \
 #     --secret-id <arn_from_outputs> \
-#     --secret-string "postgresql://postgres:<password>@<rds_endpoint>:5432/postgres"
+#     --secret-string "postgresql://postgres:<password>@<rds_endpoint>/gathr"
 
 resource "aws_secretsmanager_secret" "database_url" {
   name                    = "${var.app_name}/database-url"
@@ -20,5 +20,5 @@ resource "aws_secretsmanager_secret" "database_url" {
 # if the RDS endpoint ever changes.
 resource "aws_secretsmanager_secret_version" "database_url" {
   secret_id = aws_secretsmanager_secret.database_url.id
-  secret_string = "postgresql://${var.db_username}:${var.db_password}@${data.aws_rds_cluster.hunter_gathrer.endpoint}:5432/${var.db_name}"
+  secret_string = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.main.endpoint}/${var.db_name}"
 }

@@ -128,7 +128,8 @@
         "ec2:DeleteTags",
         "ec2:DescribeTags",
         "ec2:DescribeAvailabilityZones",
-        "ec2:DescribeAccountAttributes"
+        "ec2:DescribeAccountAttributes",
+        "ec2:DescribeNetworkInterfaces"
       ],
       "Resource": "*"
     },
@@ -194,12 +195,27 @@
     },
 
     {
-      "Sid": "RDSDescribe",
+      "Sid": "RDS",
       "Effect": "Allow",
       "Action": [
-        "rds:DescribeDBClusters"
+        "rds:CreateDBInstance",
+        "rds:DeleteDBInstance",
+        "rds:DescribeDBInstances",
+        "rds:ModifyDBInstance",
+        "rds:RebootDBInstance",
+        "rds:CreateDBSubnetGroup",
+        "rds:DeleteDBSubnetGroup",
+        "rds:DescribeDBSubnetGroups",
+        "rds:ModifyDBSubnetGroup",
+        "rds:AddTagsToResource",
+        "rds:ListTagsForResource",
+        "rds:RemoveTagsFromResource",
+        "rds:DescribeDBParameterGroups",
+        "rds:DescribeDBParameters",
+        "rds:DescribeOptionGroups",
+        "rds:DescribeOrderableDBInstanceOptions"
       ],
-      "Resource": "arn:aws:rds:us-east-1:*:cluster:huntr-gathrer"
+      "Resource": "*"
     }
 
   ]

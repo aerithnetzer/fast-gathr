@@ -1,12 +1,39 @@
-# Read the existing Aurora Serverless cluster — does NOT create or modify it.
-data "aws_rds_cluster" "hunter_gathrer" {
-  cluster_identifier = var.rds_cluster_identifier
+# ── DB Subnet Group ───────────────────────────────────────────────────────────
+
+resource "aws_db_subnet_group" "main" {
+  name       = "${var.app_name}-db-subnet-group"
+  subnet_ids = aws_subnet.private[*].id
+
+  tags = { Name = "${var.app_name}-db-subnet-group" }
 }
 
-# Find the security group(s) attached to the RDS cluster so we can add an
-# ingress rule for the ECS task SG.  Aurora clusters can have multiple SGs;
-# we use the first one. If your cluster has a dedicated SG with a known name
-# or tag, replace the filter below with a name/tag filter for precision.
-data "aws_security_group" "rds" {
-  id = tolist(data.aws_rds_cluster.hunter_gathrer.vpc_security_group_ids)[0]
+# ── RDS PostgreSQL Instance ───────────────────────────────────────────────────
+
+resource "aws_db_instance" "main" {
+  identifier     = "gathr"
+  engine         = "postgres"
+  engine_version = var.rds_engine_version
+  instance_class = var.rds_instance_class
+
+  allocated_storage     = var.rds_allocated_storage
+  max_allocated_storage = 100
+  storage_type          = "gp2"
+  storage_encrypted     = true
+
+  db_name  = var.db_name
+  username = var.db_username
+  password = var.db_password
+
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+
+  multi_az            = false
+  publicly_accessible = false
+  port                = 5432
+
+  backup_retention_period = 7
+  skip_final_snapshot     = true
+  deletion_protection     = false
+
+  tags = { Name = "gathr" }
 }
