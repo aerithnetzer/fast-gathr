@@ -8,5 +8,5 @@ data "aws_rds_cluster" "hunter_gathrer" {
 # we use the first one. If your cluster has a dedicated SG with a known name
 # or tag, replace the filter below with a name/tag filter for precision.
 data "aws_security_group" "rds" {
-  id = data.aws_rds_cluster.hunter_gathrer.vpc_security_group_ids[0]
+  id = tolist(data.aws_rds_cluster.hunter_gathrer.vpc_security_group_ids)[0]
 }
