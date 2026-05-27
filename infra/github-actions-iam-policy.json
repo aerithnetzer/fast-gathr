@@ -129,7 +129,8 @@
         "ec2:DescribeTags",
         "ec2:DescribeAvailabilityZones",
         "ec2:DescribeAccountAttributes",
-        "ec2:DescribeNetworkInterfaces"
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeVpcAttribute"
       ],
       "Resource": "*"
     },
@@ -179,12 +180,20 @@
     },
 
     {
+      "Sid": "CloudWatchLogsList",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups"
+      ],
+      "Resource": "*"
+    },
+
+    {
       "Sid": "CloudWatchLogs",
       "Effect": "Allow",
       "Action": [
         "logs:CreateLogGroup",
         "logs:DeleteLogGroup",
-        "logs:DescribeLogGroups",
         "logs:PutRetentionPolicy",
         "logs:ListTagsLogGroup",
         "logs:ListTagsForResource",
