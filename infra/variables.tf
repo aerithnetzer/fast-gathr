@@ -79,7 +79,7 @@ variable "image_tag" {
 variable "rds_cluster_identifier" {
   description = "Identifier of the existing Aurora Serverless cluster."
   type        = string
-  default     = "hunter-gathrer"
+  default     = "huntr-gathrer"
 }
 
 variable "db_name" {

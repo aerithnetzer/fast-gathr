@@ -199,7 +199,7 @@
       "Action": [
         "rds:DescribeDBClusters"
       ],
-      "Resource": "arn:aws:rds:us-east-1:*:cluster:hunter-gathrer"
+      "Resource": "arn:aws:rds:us-east-1:*:cluster:huntr-gathrer"
     }
 
   ]
