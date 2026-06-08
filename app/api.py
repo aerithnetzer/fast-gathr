@@ -3,11 +3,17 @@
 Authentication model:
 
 * ``GET /health`` is public.
-* All domain endpoints (POST + GET) require a bearer token in
+* All domain endpoints (POST + GET + DELETE) require a bearer token in
   ``Authorization: Bearer ...``.
 * Bearer tokens may be either a JWT (from ``POST /token``) or an API token
   (from ``POST /tokens``). API tokens enable users to delegate read+write
   access to AI agents and other automation.
+
+DELETE behaviour:
+
+* Returns 204 on success, 404 when the row does not exist, 409 when the
+  row is still referenced by a foreign key in another table (no cascade,
+  no silent NULL-ification — callers must drop dependents explicitly).
 """
 
 from __future__ import annotations
@@ -19,6 +25,7 @@ from typing import Annotated, Any, Type, TypeVar
 from fastapi import Body, Depends, FastAPI, HTTPException, Path, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, SQLModel, select
 
 from auth import (
@@ -357,6 +364,37 @@ def register_crud(
         tags=[tag],
         name=f"get_{safe_name}",
     )(_get)
+
+    def _delete(
+        session: SessionDep,
+        _user: CurrentUser,
+        item_id: Any = Path(...),
+    ):
+        row = session.get(model, item_id)
+        if row is None:
+            raise not_found
+        session.delete(row)
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"{model.__name__} {item_id!r} is referenced by other "
+                    f"rows; delete or update those references first"
+                ),
+            )
+
+    _delete.__annotations__["item_id"] = id_type
+    _delete.__name__ = f"delete_{safe_name}"
+
+    app.delete(
+        f"/{prefix}/{{item_id}}",
+        status_code=status.HTTP_204_NO_CONTENT,
+        tags=[tag],
+        name=f"delete_{safe_name}",
+    )(_delete)
 
 
 # ── Register every docx-defined table ───────────────────────────────────────
