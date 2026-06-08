@@ -122,6 +122,10 @@ def get_current_user(
                 session.commit()
             except Exception:
                 session.rollback()
+            # Detach so callers can read attributes after the session closes
+            # without triggering a refresh on an expired/closed session.
+            session.refresh(user)
+            session.expunge(user)
             return user
 
         # Otherwise treat as a JWT.
@@ -136,6 +140,7 @@ def get_current_user(
         user = session.exec(select(User).where(User.username == username)).first()
         if user is None or not user.is_active:
             raise _unauthenticated
+        session.expunge(user)
         return user
 
 
