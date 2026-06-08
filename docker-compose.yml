@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
@@ -16,6 +16,9 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://user:pass@db:5432/mydb
+      JWT_SECRET_KEY: dev-only-secret-do-not-use-in-prod
+      BOOTSTRAP_ADMIN_USERNAME: admin
+      BOOTSTRAP_ADMIN_PASSWORD: admin
     depends_on:
       db:
         condition: service_healthy

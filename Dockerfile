@@ -20,5 +20,11 @@ ENV PATH="/root/.local/bin/:$PATH"
 RUN uv sync --directory /code
 
 COPY ./app /code/app
+COPY ./alembic.ini /code/alembic.ini
 
-CMD ["uv", "run" , "fastapi", "run", "app/api.py", "--port", "8000"]
+# Run migrations on startup, then launch the API. Migrations are
+# idempotent (alembic short-circuits when already at head), and a
+# bootstrap ``alembic stamp 0001_baseline`` should be performed once
+# against any pre-existing database that already has ``user`` and
+# ``apitoken`` from the legacy ``create_all`` schema.
+CMD ["sh", "-c", "uv run --directory /code alembic upgrade head && uv run --directory /code fastapi run app/api.py --port 8000"]

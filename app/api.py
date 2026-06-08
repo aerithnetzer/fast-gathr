@@ -1,21 +1,25 @@
 """FastAPI application entry point.
 
 Authentication model:
-- ``GET`` endpoints (data reads + ``/health``) are public.
-- ``POST`` endpoints require a bearer token in ``Authorization: Bearer ...``.
-- Bearer tokens may be either a JWT (from ``POST /token``) or an API token
-  (from ``POST /tokens``). API tokens enable users to delegate write access to
-  AI agents and other automation.
+
+* ``GET /health`` is public.
+* All domain endpoints (POST + GET) require a bearer token in
+  ``Authorization: Bearer ...``.
+* Bearer tokens may be either a JWT (from ``POST /token``) or an API token
+  (from ``POST /tokens``). API tokens enable users to delegate read+write
+  access to AI agents and other automation.
 """
 
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from typing import Annotated
+from __future__ import annotations
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from contextlib import asynccontextmanager
+from datetime import date, datetime, timezone
+from typing import Annotated, Any, Type, TypeVar
+
+from fastapi import Body, Depends, FastAPI, HTTPException, Path, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from sqlmodel import Session, select
+from pydantic import BaseModel, ConfigDict
+from sqlmodel import Session, SQLModel, select
 
 from auth import (
     bootstrap_admin,
@@ -27,19 +31,42 @@ from auth import (
     hash_password,
     verify_password,
 )
-from db import ApiToken, Person, User, engine
+from db import (
+    ApiToken,
+    AttributeOccurrence,
+    ChatRecord,
+    Clause,
+    DocumentMetadata,
+    EventOccurrence,
+    Keyword,
+    KeywordOccurrence,
+    Locations,
+    MasterVocabularyList,
+    Mentions,
+    Person,
+    PersonOccurrence,
+    QuantifiedStatementOccurrence,
+    Relationship,
+    RelationshipOccurrence,
+    SocialIdentity,
+    SocialIdentityOccurrence,
+    Summary,
+    User,
+    VesselNames,
+    VesselOccurrence,
+    engine,
+)
 
 
 # ── App lifecycle ───────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Bootstrap the initial admin user from env vars if no admin exists yet.
     bootstrap_admin()
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="fast-gathr API")
 
 
 # ── Session dependency ──────────────────────────────────────────────────────
@@ -54,7 +81,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 CurrentAdmin = Annotated[User, Depends(get_current_admin)]
 
 
-# ── Pydantic request / response shapes ──────────────────────────────────────
+# ── Auth-specific schemas ───────────────────────────────────────────────────
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -167,9 +194,13 @@ def create_user(
     )
 
 
-# ── API tokens (delegate POST access to agents) ─────────────────────────────
+# ── API tokens (delegate access to agents) ──────────────────────────────────
 
-@app.post("/tokens", response_model=ApiTokenCreateResponse, status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/tokens",
+    response_model=ApiTokenCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_api_token(
     body: ApiTokenCreateRequest,
     session: SessionDep,
@@ -217,8 +248,6 @@ def revoke_api_token(
 ):
     row = session.get(ApiToken, token_id)
     if row is None or row.user_id != user.id:
-        # Same response whether it doesn't exist or belongs to another user —
-        # avoids leaking which token IDs are valid.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     if row.revoked_at is None:
         row.revoked_at = datetime.now(tz=timezone.utc)
@@ -226,26 +255,145 @@ def revoke_api_token(
         session.commit()
 
 
-# ── Domain endpoints ────────────────────────────────────────────────────────
+# ── Generic CRUD factory ────────────────────────────────────────────────────
 
-@app.post("/persons/")
-def create_person(
-    person: Person,
-    session: SessionDep,
-    _user: CurrentUser,
-):
-    session.add(person)
-    session.commit()
-    session.refresh(person)
-    return person
+ModelT = TypeVar("ModelT", bound=SQLModel)
 
 
-@app.get("/persons/{person_id}")
-def get_person(person_id: str, session: SessionDep) -> Person:
-    person = session.get(Person, person_id)
-    if person is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Person not found",
-        )
-    return person
+def register_crud(
+    *,
+    prefix: str,
+    model: Type[ModelT],
+    tag: str,
+    id_type: type = str,
+) -> None:
+    """Register ``POST /<prefix>/``, ``GET /<prefix>/{id}`` and
+    ``GET /<prefix>/`` endpoints for the given SQLModel.
+
+    Both endpoints require an authenticated user.
+
+    The request body and response schemas are derived from the model
+    itself. Vector columns are intentionally not excluded — agents may
+    legitimately want to write embeddings via POST.
+    """
+
+    not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"{model.__name__} not found",
+    )
+    safe_name = prefix.replace("-", "_")
+
+    # Bind ``model`` / ``id_type`` to defaults so FastAPI sees concrete
+    # types at decoration time (using them as annotations would leave
+    # them as forward refs that Pydantic can't resolve).
+    def _create(
+        session: SessionDep,
+        _user: CurrentUser,
+        body: ModelT = Body(...),
+    ):
+        pk = getattr(body, "id", None)
+        if pk is not None and session.get(model, pk) is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"{model.__name__} with id={pk!r} already exists",
+            )
+        session.add(body)
+        try:
+            session.commit()
+        except Exception as exc:  # pragma: no cover - defensive
+            session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc.__cause__ or exc),
+            )
+        session.refresh(body)
+        return body
+
+    # Patch the body parameter's annotation to the concrete model class.
+    _create.__annotations__["body"] = model
+    _create.__name__ = f"create_{safe_name}"
+
+    app.post(
+        f"/{prefix}/",
+        response_model=model,
+        status_code=status.HTTP_201_CREATED,
+        tags=[tag],
+        name=f"create_{safe_name}",
+    )(_create)
+
+    def _list(
+        session: SessionDep,
+        _user: CurrentUser,
+        limit: int = Query(default=100, ge=1, le=500),
+        offset: int = Query(default=0, ge=0),
+    ):
+        return session.exec(select(model).offset(offset).limit(limit)).all()
+
+    _list.__name__ = f"list_{safe_name}"
+
+    app.get(
+        f"/{prefix}/",
+        response_model=list[model],
+        tags=[tag],
+        name=f"list_{safe_name}",
+    )(_list)
+
+    def _get(
+        session: SessionDep,
+        _user: CurrentUser,
+        item_id: Any = Path(...),
+    ):
+        row = session.get(model, item_id)
+        if row is None:
+            raise not_found
+        return row
+
+    _get.__annotations__["item_id"] = id_type
+    _get.__name__ = f"get_{safe_name}"
+
+    app.get(
+        f"/{prefix}/{{item_id}}",
+        response_model=model,
+        tags=[tag],
+        name=f"get_{safe_name}",
+    )(_get)
+
+
+# ── Register every docx-defined table ───────────────────────────────────────
+
+register_crud(prefix="vocabulary", model=MasterVocabularyList, tag="Vocabulary")
+register_crud(prefix="mentions", model=Mentions, tag="Mentions")
+register_crud(prefix="locations", model=Locations, tag="Locations")
+register_crud(prefix="persons", model=Person, tag="Persons")
+register_crud(prefix="persons-occurrences", model=PersonOccurrence, tag="Persons")
+register_crud(prefix="vessels", model=VesselNames, tag="Vessels")
+register_crud(prefix="vessels-occurrences", model=VesselOccurrence, tag="Vessels")
+register_crud(prefix="social-identities", model=SocialIdentity, tag="SocialIdentity")
+register_crud(
+    prefix="social-identities-occurrences",
+    model=SocialIdentityOccurrence,
+    tag="SocialIdentity",
+)
+register_crud(prefix="relationships", model=Relationship, tag="Relationships")
+register_crud(
+    prefix="relationships-occurrences",
+    model=RelationshipOccurrence,
+    tag="Relationships",
+)
+register_crud(prefix="events-occurrences", model=EventOccurrence, tag="Events")
+register_crud(
+    prefix="attributes-occurrences", model=AttributeOccurrence, tag="Attributes"
+)
+register_crud(
+    prefix="quantified-statements-occurrences",
+    model=QuantifiedStatementOccurrence,
+    tag="QuantifiedStatements",
+)
+register_crud(prefix="clauses", model=Clause, tag="Documents")
+register_crud(prefix="documents", model=DocumentMetadata, tag="Documents")
+register_crud(prefix="summaries", model=Summary, tag="Documents", id_type=int)
+register_crud(prefix="keywords", model=Keyword, tag="Keywords")
+register_crud(
+    prefix="keywords-occurrences", model=KeywordOccurrence, tag="Keywords"
+)
+register_crud(prefix="chat-records", model=ChatRecord, tag="Documents", id_type=int)
