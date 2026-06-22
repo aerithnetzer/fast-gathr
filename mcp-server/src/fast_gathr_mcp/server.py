@@ -18,6 +18,7 @@ import os
 
 import uvicorn
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -35,7 +36,31 @@ log = logging.getLogger("fast_gathr_mcp")
 
 # ── MCP server with all tools registered ────────────────────────────────────
 
-mcp = FastMCP("fast-gathr")
+# Public hostname this server is reached at. Configurable so non-prod
+# deployments (e.g. ``localhost``) work without editing this file.
+PUBLIC_HOST = os.environ.get("MCP_PUBLIC_HOST", "mcp.gathrlab.org")
+
+# DNS-rebinding protection in the MCP SDK rejects any Host header that
+# isn't on this list. Behind an ALB the inbound Host is the public DNS
+# name, so add it explicitly. We also keep localhost for in-container
+# health checks and local dev.
+_security = TransportSecuritySettings(
+    enable_dns_rebinding_protection=True,
+    allowed_hosts=[
+        PUBLIC_HOST,
+        "localhost",
+        "localhost:8000",
+        "127.0.0.1",
+        "127.0.0.1:8000",
+    ],
+    allowed_origins=[
+        f"https://{PUBLIC_HOST}",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+)
+
+mcp = FastMCP("fast-gathr", transport_security=_security)
 register_all_tools(mcp)
 
 
@@ -96,6 +121,11 @@ def main() -> None:
         host="0.0.0.0",
         port=port,
         log_level=os.environ.get("LOG_LEVEL", "info").lower(),
+        # The MCP server runs behind an AWS ALB and Cloudflare. Trust
+        # X-Forwarded-* headers from any upstream IP so requests don't get
+        # rejected with "Invalid Host header".
+        proxy_headers=True,
+        forwarded_allow_ips="*",
     )
 
 
