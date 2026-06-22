@@ -1,11 +1,14 @@
-"""HTTP+SSE entry point for the fast-gathr MCP server.
+"""Streamable-HTTP entry point for the fast-gathr MCP server.
 
-Wraps the MCP SSE transport in a Starlette app so we can:
+The MCP transport spec evolved from the legacy ``/sse`` + ``/messages`` split
+to a single **Streamable HTTP** endpoint (POST + SSE on the same path). All
+modern clients — Claude Desktop, Claude.ai connectors, and opencode — speak
+Streamable HTTP. We expose that at ``/mcp`` and keep a separate ``/health``
+route for ALB target-group checks.
 
-* Add a ``GET /health`` route for the ALB target group health check.
-* Extract the bearer token from the inbound ``Authorization`` header
-  (set by Claude based on the user's connector configuration) and stash
-  it on a context variable that tool implementations read.
+A Starlette middleware extracts the inbound ``Authorization: Bearer …``
+header (set by the client based on its connector configuration) and stashes
+the token on a context variable that the tool implementations read.
 """
 
 from __future__ import annotations
@@ -15,12 +18,10 @@ import os
 
 import uvicorn
 from mcp.server.fastmcp import FastMCP
-from starlette.applications import Starlette
-from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.routing import Mount, Route
+from starlette.routing import Route
 
 from .tools import current_bearer_token, register_all_tools
 
@@ -41,8 +42,9 @@ register_all_tools(mcp)
 # ── Bearer-token middleware ─────────────────────────────────────────────────
 
 class BearerTokenMiddleware(BaseHTTPMiddleware):
-    """Extract the inbound ``Authorization: Bearer …`` header and bind it
-    to a context variable for the duration of the request."""
+    """Extract the inbound ``Authorization: Bearer …`` header and bind it to
+    a context variable for the duration of the request. Tool implementations
+    in :mod:`.tools` read this variable when constructing the API client."""
 
     async def dispatch(self, request: Request, call_next):
         token: str | None = None
@@ -59,22 +61,28 @@ class BearerTokenMiddleware(BaseHTTPMiddleware):
             current_bearer_token.reset(token_reset)
 
 
-# ── Starlette app: /health + the MCP SSE transport ──────────────────────────
+# ── /health endpoint ────────────────────────────────────────────────────────
 
 async def health(_: Request) -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
 
-def build_app() -> Starlette:
-    sse_app = mcp.sse_app()
-    return Starlette(
-        debug=False,
-        routes=[
-            Route("/health", endpoint=health, methods=["GET"]),
-            Mount("/", app=sse_app),
-        ],
-        middleware=[Middleware(BearerTokenMiddleware)],
-    )
+# ── Build the Starlette app ─────────────────────────────────────────────────
+
+def build_app():
+    """Return the Starlette app, with FastMCP's own routes/lifespan plus a
+    ``/health`` route and the bearer-token middleware tacked on.
+
+    We use ``streamable_http_app()`` (the modern transport) rather than
+    ``sse_app()`` (the legacy one); modern clients speak Streamable HTTP
+    on a single endpoint at ``/mcp``.
+    """
+    app = mcp.streamable_http_app()
+    # Insert /health ahead of the existing /mcp route so the route table is
+    # ordered the way an ALB / casual curl expects.
+    app.router.routes.insert(0, Route("/health", endpoint=health, methods=["GET"]))
+    app.add_middleware(BearerTokenMiddleware)
+    return app
 
 
 app = build_app()
