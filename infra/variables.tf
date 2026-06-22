@@ -74,6 +74,12 @@ variable "image_tag" {
   default     = "latest"
 }
 
+variable "mcp_image_tag" {
+  description = "Docker image tag for the MCP server. Set by CI to the commit SHA."
+  type        = string
+  default     = "latest"
+}
+
 # ── RDS ──────────────────────────────────────────────────────────────────────
 
 variable "rds_instance_class" {
@@ -132,4 +138,10 @@ variable "api_domain" {
   description = "Public DNS name for the API (e.g. api.gathrlab.org)."
   type        = string
   default     = "api.gathrlab.org"
+}
+
+variable "mcp_domain" {
+  description = "Public DNS name for the hosted MCP server (e.g. mcp.gathrlab.org)."
+  type        = string
+  default     = "mcp.gathrlab.org"
 }

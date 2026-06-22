@@ -52,3 +52,18 @@ output "api_domain" {
   description = "Public API domain — point a CNAME from this to the ALB DNS name."
   value       = var.api_domain
 }
+
+output "mcp_domain" {
+  description = "Public MCP domain — point a CNAME from this to the ALB DNS name (proxied)."
+  value       = var.mcp_domain
+}
+
+output "mcp_ecr_repository_url" {
+  description = "ECR repository URL for the MCP server image."
+  value       = aws_ecr_repository.mcp.repository_url
+}
+
+output "mcp_ecs_service_name" {
+  description = "Name of the MCP ECS service."
+  value       = aws_ecs_service.mcp.name
+}

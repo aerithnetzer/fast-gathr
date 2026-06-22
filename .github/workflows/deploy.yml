@@ -40,14 +40,18 @@ jobs:
         working-directory: infra
         run: terraform init
 
-      # ── 5. Ensure ECR repository exists before Docker push ───────────────────
+      # ── 5. Ensure ECR repositories exist before Docker push ──────────────────
       - name: Terraform apply (ECR only)
         working-directory: infra
         env:
           TF_VAR_image_tag:                ${{ github.sha }}
+          TF_VAR_mcp_image_tag:            ${{ github.sha }}
           TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
           TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
-        run: terraform apply -auto-approve -target=aws_ecr_repository.app
+        run: |
+          terraform apply -auto-approve \
+            -target=aws_ecr_repository.app \
+            -target=aws_ecr_repository.mcp
 
       # ── 5b. Create ACM cert (no-op if already exists) ────────────────────────
       # Targeting just the cert so we can output the DNS validation records
@@ -58,6 +62,7 @@ jobs:
         working-directory: infra
         env:
           TF_VAR_image_tag:                ${{ github.sha }}
+          TF_VAR_mcp_image_tag:            ${{ github.sha }}
           TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
           TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: terraform apply -auto-approve -target=aws_acm_certificate.api
@@ -65,7 +70,7 @@ jobs:
       - name: Show ACM DNS validation records
         working-directory: infra
         run: |
-          echo "Create the following CNAME record in Cloudflare (DNS only / grey cloud):"
+          echo "Create the following CNAME record(s) in Cloudflare (DNS only / grey cloud):"
           terraform output -json acm_validation_records | jq
 
       # ── 6. ECR login ─────────────────────────────────────────────────────────
@@ -73,9 +78,8 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # ── 7. Build & push Docker image ─────────────────────────────────────────
-      - name: Build and push image to ECR
-        id: build-image
+      # ── 7. Build & push API image ────────────────────────────────────────────
+      - name: Build and push API image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -84,7 +88,20 @@ jobs:
           docker build -t "$IMAGE_URI" -t "${ECR_REGISTRY}/${{ env.APP_NAME }}:latest" .
           docker push "$IMAGE_URI"
           docker push "${ECR_REGISTRY}/${{ env.APP_NAME }}:latest"
-          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+      # ── 7b. Build & push MCP image ───────────────────────────────────────────
+      - name: Build and push MCP image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="${ECR_REGISTRY}/${{ env.APP_NAME }}-mcp:${IMAGE_TAG}"
+          docker build \
+            -t "$IMAGE_URI" \
+            -t "${ECR_REGISTRY}/${{ env.APP_NAME }}-mcp:latest" \
+            ./mcp-server
+          docker push "$IMAGE_URI"
+          docker push "${ECR_REGISTRY}/${{ env.APP_NAME }}-mcp:latest"
 
       # ── 8. Terraform apply (full) ─────────────────────────────────────────────
       # Sensitive values are passed as TF_VAR_* env vars so they never appear
@@ -93,14 +110,16 @@ jobs:
         working-directory: infra
         env:
           TF_VAR_image_tag:                ${{ github.sha }}
+          TF_VAR_mcp_image_tag:            ${{ github.sha }}
           TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
           TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: terraform apply -auto-approve
 
-      # ── 8. Force new ECS deployment ──────────────────────────────────────────
-      # Ensures the service picks up the new image even if the task definition
-      # didn't change (e.g. when only app code changed within the same tag).
-      - name: Force new ECS deployment
+      # ── 9. Force new ECS deployments ─────────────────────────────────────────
+      # Ensures both services pick up the new image even if the task
+      # definition didn't change (e.g. when only app code changed within
+      # the same tag).
+      - name: Force new ECS deployment (API)
         run: |
           aws ecs update-service \
             --cluster "${{ env.APP_NAME }}" \
@@ -108,10 +127,18 @@ jobs:
             --force-new-deployment \
             --region   "${{ env.AWS_REGION }}"
 
-      # ── 9. Wait for stability ─────────────────────────────────────────────────
-      - name: Wait for service to stabilize
+      - name: Force new ECS deployment (MCP)
+        run: |
+          aws ecs update-service \
+            --cluster "${{ env.APP_NAME }}" \
+            --service  "${{ env.APP_NAME }}-mcp" \
+            --force-new-deployment \
+            --region   "${{ env.AWS_REGION }}"
+
+      # ── 10. Wait for stability ────────────────────────────────────────────────
+      - name: Wait for services to stabilize
         run: |
           aws ecs wait services-stable \
             --cluster "${{ env.APP_NAME }}" \
-            --services "${{ env.APP_NAME }}" \
+            --services "${{ env.APP_NAME }}" "${{ env.APP_NAME }}-mcp" \
             --region "${{ env.AWS_REGION }}"

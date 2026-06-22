@@ -36,7 +36,10 @@
         "ecr:DescribeImages",
         "ecr:DescribeImageScanFindings"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:*:repository/fast-gathr"
+      "Resource": [
+        "arn:aws:ecr:us-east-1:*:repository/fast-gathr",
+        "arn:aws:ecr:us-east-1:*:repository/fast-gathr-mcp"
+      ]
     },
 
     {
@@ -156,6 +159,11 @@
         "elasticloadbalancing:DescribeListenerAttributes",
         "elasticloadbalancing:ModifyListener",
         "elasticloadbalancing:ModifyListenerAttributes",
+        "elasticloadbalancing:CreateRule",
+        "elasticloadbalancing:DeleteRule",
+        "elasticloadbalancing:DescribeRules",
+        "elasticloadbalancing:ModifyRule",
+        "elasticloadbalancing:SetRulePriorities",
         "elasticloadbalancing:AddTags",
         "elasticloadbalancing:RemoveTags",
         "elasticloadbalancing:DescribeTags"

@@ -63,3 +63,68 @@ resource "aws_lb_listener" "https" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+# ── MCP target group + host-based routing ────────────────────────────────────
+
+resource "aws_lb_target_group" "mcp" {
+  name        = "${var.app_name}-mcp-tg"
+  port        = var.container_port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/health"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    interval            = 30
+    timeout             = 5
+    matcher             = "200"
+  }
+
+  # SSE responses are long-lived; bump the deregistration delay down so
+  # rolling deploys don't drag, and disable target-group stickiness
+  # (each MCP request can land on any healthy task).
+  deregistration_delay = 30
+
+  tags = { Name = "${var.app_name}-mcp-tg" }
+}
+
+resource "aws_lb_listener_rule" "mcp_https" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.mcp.arn
+  }
+
+  condition {
+    host_header {
+      values = [var.mcp_domain]
+    }
+  }
+}
+
+# Mirror the host-based rule on the HTTP listener so requests to
+# http://mcp.gathrlab.org get redirected to HTTPS like the API does.
+resource "aws_lb_listener_rule" "mcp_http_redirect" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+  condition {
+    host_header {
+      values = [var.mcp_domain]
+    }
+  }
+}
