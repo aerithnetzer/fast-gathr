@@ -1,8 +1,10 @@
 # ── DB Subnet Group ───────────────────────────────────────────────────────────
 
 resource "aws_db_subnet_group" "main" {
-  name       = "${var.app_name}-db-subnet-group"
-  subnet_ids = aws_subnet.private[*].id
+  name = "${var.app_name}-db-subnet-group"
+  # Public subnets are required for publicly_accessible = true so the
+  # instance gets a public endpoint reachable via the internet gateway.
+  subnet_ids = aws_subnet.public[*].id
 
   tags = { Name = "${var.app_name}-db-subnet-group" }
 }
@@ -28,7 +30,7 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   multi_az            = false
-  publicly_accessible = false
+  publicly_accessible = true
   port                = 5432
 
   backup_retention_period = 7

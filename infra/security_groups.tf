@@ -73,6 +73,17 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.ecs_task.id]
   }
 
+  # Public PostgreSQL access for authenticated clients (TablePlus, etc.)
+  # from any IP. Security relies on PostgreSQL password auth + strong,
+  # per-user passwords + TLS. No role granted here is a cluster SUPERUSER.
+  ingress {
+    description = "PostgreSQL from any IP (authenticated access)"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "All outbound"
     from_port   = 0
