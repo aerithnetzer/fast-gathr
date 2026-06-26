@@ -2,9 +2,11 @@
 
 resource "aws_db_subnet_group" "main" {
   name = "${var.app_name}-db-subnet-group"
-  # Public subnets are required for publicly_accessible = true so the
-  # instance gets a public endpoint reachable via the internet gateway.
-  subnet_ids = aws_subnet.public[*].id
+  # Include both public and private subnets. Public subnets are required
+  # for publicly_accessible = true to yield an internet-reachable
+  # endpoint; private subnets are retained because they are currently in
+  # use and AWS refuses to remove in-use subnets from the group.
+  subnet_ids = concat(aws_subnet.public[*].id, aws_subnet.private[*].id)
 
   tags = { Name = "${var.app_name}-db-subnet-group" }
 }
