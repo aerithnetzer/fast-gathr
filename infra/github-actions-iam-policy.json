@@ -38,7 +38,8 @@
       ],
       "Resource": [
         "arn:aws:ecr:us-east-1:*:repository/fast-gathr",
-        "arn:aws:ecr:us-east-1:*:repository/fast-gathr-mcp"
+        "arn:aws:ecr:us-east-1:*:repository/fast-gathr-mcp",
+        "arn:aws:ecr:us-east-1:*:repository/fast-gathr-emtl"
       ]
     },
 
