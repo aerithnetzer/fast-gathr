@@ -39,6 +39,12 @@ if "whitenoise.middleware.WhiteNoiseMiddleware" not in MIDDLEWARE:
         _security_index + 1, "whitenoise.middleware.WhiteNoiseMiddleware"
     )
 
+# Answer /healthz before Host validation so ALB health checks (which send the
+# target's private IP as the Host header) are not rejected with 400. Must be
+# the very first middleware.
+if "emtl_site.health_middleware.HealthCheckMiddleware" not in MIDDLEWARE:
+    MIDDLEWARE.insert(0, "emtl_site.health_middleware.HealthCheckMiddleware")
+
 # ── Behind the ALB (TLS terminated upstream) ─────────────────────────────────
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
