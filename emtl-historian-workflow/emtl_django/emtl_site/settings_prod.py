@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 
 from .settings import *  # noqa: F401,F403  (inherit all base settings)
-from .settings import BASE_DIR, MIDDLEWARE
+from .settings import BASE_DIR, MIDDLEWARE, TEMPLATES
 
 # ── Static files via WhiteNoise ──────────────────────────────────────────────
 
@@ -44,6 +44,23 @@ if "whitenoise.middleware.WhiteNoiseMiddleware" not in MIDDLEWARE:
 # the very first middleware.
 if "emtl_site.health_middleware.HealthCheckMiddleware" not in MIDDLEWARE:
     MIDDLEWARE.insert(0, "emtl_site.health_middleware.HealthCheckMiddleware")
+
+# Gate the whole site behind Django login. Inserted immediately after
+# AuthenticationMiddleware so request.user is populated. Everything except the
+# allowlist (/healthz, /accounts/login|logout|password_reset, /static/)
+# redirects anonymous users to LOGIN_URL.
+_auth_mw = "django.contrib.auth.middleware.AuthenticationMiddleware"
+_login_mw = "emtl_site.login_required_middleware.LoginRequiredMiddleware"
+if _login_mw not in MIDDLEWARE and _auth_mw in MIDDLEWARE:
+    MIDDLEWARE.insert(MIDDLEWARE.index(_auth_mw) + 1, _login_mw)
+
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+# Project-level templates dir so LoginView finds registration/login.html.
+if str(BASE_DIR / "templates") not in TEMPLATES[0]["DIRS"]:
+    TEMPLATES[0]["DIRS"].append(str(BASE_DIR / "templates"))
 
 # ── Behind the ALB (TLS terminated upstream) ─────────────────────────────────
 

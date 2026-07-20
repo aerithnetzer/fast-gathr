@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · EMTL Historian Workflow</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f4f5f7;
+      margin: 0;
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e4e8;
+      border-radius: 10px;
+      padding: 2rem 2.25rem;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    h1 { font-size: 1.15rem; margin: 0 0 0.25rem; color: #1b1f24; }
+    p.sub { margin: 0 0 1.5rem; color: #6b7280; font-size: 0.85rem; }
+    label { display: block; font-size: 0.8rem; color: #374151; margin: 0.75rem 0 0.25rem; }
+    input[type=text], input[type=password] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    button {
+      margin-top: 1.25rem;
+      width: 100%;
+      padding: 0.6rem;
+      background: #2563eb;
+      color: #fff;
+      border: 0;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    .errors { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+              padding: 0.6rem 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>EMTL Historian Workflow</h1>
+    <p class="sub">Please sign in to continue.</p>
+
+    {% if form.errors %}
+      <div class="errors">Your username and password didn't match. Please try again.</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+      <label for="id_username">Username</label>
+      {{ form.username }}
+      <label for="id_password">Password</label>
+      {{ form.password }}
+      <button type="submit">Sign in</button>
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+  </div>
+</body>
+</html>

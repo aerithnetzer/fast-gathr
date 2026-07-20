@@ -75,6 +75,26 @@ resource "aws_secretsmanager_secret_version" "emtl_django_secret_key" {
   secret_string = random_password.emtl_django_secret.result
 }
 
+# Initial Django superuser password: generated once by Terraform, stored only
+# in Secrets Manager. Read on first startup to create the admin (idempotent).
+resource "random_password" "emtl_bootstrap_admin" {
+  length  = 32
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "emtl_bootstrap_admin_password" {
+  name                    = "${var.app_name}/emtl/bootstrap-admin-password"
+  description             = "Initial Django superuser password for the EMTL app (first startup only)."
+  recovery_window_in_days = 7
+
+  tags = { Name = "${var.app_name}-emtl-bootstrap-admin-password" }
+}
+
+resource "aws_secretsmanager_secret_version" "emtl_bootstrap_admin_password" {
+  secret_id     = aws_secretsmanager_secret.emtl_bootstrap_admin_password.id
+  secret_string = random_password.emtl_bootstrap_admin.result
+}
+
 # ── CloudWatch log group ──────────────────────────────────────────────────────
 
 resource "aws_cloudwatch_log_group" "emtl" {
@@ -116,6 +136,10 @@ resource "aws_ecs_task_definition" "emtl" {
         {
           name      = "DJANGO_SECRET_KEY"
           valueFrom = aws_secretsmanager_secret.emtl_django_secret_key.arn
+        },
+        {
+          name      = "EMTL_BOOTSTRAP_ADMIN_PASSWORD"
+          valueFrom = aws_secretsmanager_secret.emtl_bootstrap_admin_password.arn
         }
       ]
 
@@ -124,6 +148,7 @@ resource "aws_ecs_task_definition" "emtl" {
         { name = "DJANGO_DEBUG", value = "0" },
         { name = "DJANGO_ALLOWED_HOSTS", value = "${var.emtl_domain},localhost,127.0.0.1" },
         { name = "DJANGO_PUBLIC_HOST", value = var.emtl_domain },
+        { name = "EMTL_BOOTSTRAP_ADMIN_USERNAME", value = "admin" },
         { name = "EMTL_CHATBOT_PROVIDER", value = "unconfigured" },
         { name = "EMTL_STAGE_PROVIDER", value = "unconfigured" },
         { name = "EMTL_WORKFLOW_REPOSITORY", value = "unconfigured" },

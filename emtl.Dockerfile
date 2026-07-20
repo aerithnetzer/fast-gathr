@@ -35,5 +35,5 @@ RUN DJANGO_SECRET_KEY=build-time-only \
 EXPOSE 8000
 
 # Run migrations (Django only touches its own tagger_/auth_/django_ tables),
-# then serve. gunicorn with a modest worker count for a research-tool load.
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn emtl_site.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -"]
+# bootstrap the admin user (idempotent), then serve.
+ENTRYPOINT ["./entrypoint.sh"]
