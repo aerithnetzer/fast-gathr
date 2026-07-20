@@ -55,11 +55,16 @@ jobs:
             -target=aws_ecr_repository.mcp \
             -target=aws_ecr_repository.emtl
 
-      # ── 5b. Create ACM cert (no-op if already exists) ────────────────────────
-      # Targeting just the cert so we can output the DNS validation records
-      # before we try to validate. On the FIRST run this will create the cert
-      # in PENDING_VALIDATION state; you must then create the CNAME shown in
-      # the output below in Cloudflare (DNS only / grey cloud), then re-run.
+      # ── 5b. Create/roll ACM cert + attach to listener ───────────────────────
+      # Targeting the cert, its validation, and the HTTPS listener together so
+      # that when the SAN list changes (forcing a new cert via
+      # create_before_destroy), the listener is moved onto the new cert BEFORE
+      # the old one is destroyed. Targeting only the cert would deadlock: ACM
+      # refuses to delete a cert still attached to the listener.
+      #
+      # On the very first run the cert is created PENDING_VALIDATION; add the
+      # CNAME(s) shown by the next step in Cloudflare (DNS only / grey cloud),
+      # then re-run.
       - name: Terraform apply (ACM cert only)
         working-directory: infra
         env:
@@ -68,7 +73,12 @@ jobs:
           TF_VAR_emtl_image_tag:           ${{ github.sha }}
           TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
           TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
-        run: terraform apply -auto-approve -target=aws_acm_certificate.api
+        run: |
+          terraform apply -auto-approve \
+            -target=aws_acm_certificate.api \
+            -target=aws_acm_certificate_validation.api \
+            -target=aws_lb_listener.https \
+          || terraform apply -auto-approve -target=aws_acm_certificate.api
 
       - name: Show ACM DNS validation records
         working-directory: infra
