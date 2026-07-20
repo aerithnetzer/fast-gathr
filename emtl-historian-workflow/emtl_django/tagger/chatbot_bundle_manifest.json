@@ -1,0 +1,195 @@
+{
+  "schema_version": "emtl-chatbot-bundle-v0.2",
+  "project_root_relative_base": ".",
+  "notes": [
+    "Files under Chatbot docs/Claude chatbots are the selected current chatbot resources.",
+    "Fixture outputs are demonstrations and are never treated as historian-validated data."
+  ],
+  "stages": {
+    "summary_keywords": {
+      "stage_label": "Summary & Keyword",
+      "system_prompt": "Chatbot docs/Claude chatbots/Keyword_SystemPrompt_v3_KB.txt",
+      "instructions": [
+        "Chatbot docs/Claude chatbots/Keyword_Reference_Guide.txt"
+      ],
+      "examples": [],
+      "controlled_lists": [
+        "resources/legacy/Keyword_Registry_old.xlsx"
+      ],
+      "boilerplate": [],
+      "input_requirements": [
+        "document_header",
+        "document_body"
+      ],
+      "expected_output_type": "labelled_text_summary_and_keyword_evidence",
+      "missing_files": [],
+      "substitutions": [
+        {
+          "email_name": "Keyword_Registry.csv",
+          "selected": "resources/legacy/Keyword_Registry_old.xlsx",
+          "reason": "No current registry is available; this workbook is explicitly marked as a temporary legacy authority."
+        }
+      ],
+      "old_files_not_used": [
+        "Chatbot docs/Summary_Keyword_SystemPrompt--outdated.docx",
+        "Chatbot docs/Keyword_Reference_Guide old.txt",
+        "Chatbot docs/Keyword_Reference_Guide old.docx"
+      ],
+      "ambiguity_flags": [
+        "The current registry is unavailable; Keyword_Registry_old.xlsx is a temporary legacy authority and must not be represented as current.",
+        "Summary_Keyword_SystemPrompt_v2.docx also exists; v3_KB is selected because it is newer and has stricter mature-registry rules."
+      ]
+    },
+    "entity_registry": {
+      "stage_label": "Entity Registry",
+      "system_prompt": "Chatbot docs/Claude chatbots/Entity_Registry_Tagger_system_prompt.txt",
+      "instructions": [
+        "Chatbot docs/Claude chatbots/Entity_Registry_Instructions.txt"
+      ],
+      "examples": [],
+      "controlled_lists": [
+        "Chatbot docs/Claude chatbots/Entity_List.xlsx",
+        "Chatbot docs/Claude chatbots/Disambiguation_Watch_List.csv",
+        "Chatbot docs/Claude chatbots/Attributes_List.csv"
+      ],
+      "boilerplate": [
+        "Chatbot docs/Claude chatbots/Legal_Boilerplate.txt"
+      ],
+      "input_requirements": [
+        "document_header",
+        "document_body"
+      ],
+      "expected_output_type": "gathr_entity_registry_text",
+      "missing_files": [],
+      "substitutions": [],
+      "system_prompt_resolution": {
+        "status": "resolved",
+        "selected": "Chatbot docs/Claude chatbots/Entity_Registry_Tagger_system_prompt.txt",
+        "selected_filename": "Entity_Registry_Tagger_system_prompt.txt",
+        "authority": "Selected current chatbot resource.",
+        "source": "Dropbox/Chatbot docs/Claude chatbots/Entity_Registry_Tagger_system_prompt.txt",
+        "sha256": "4ebf94db767945d96e6a20960e14f77fa47af27d27f99fbba32f62e5b506a2b9",
+        "source_file_renamed_or_modified": false,
+        "legacy_alternates_not_selected": [
+          "Chatbot docs/Entity_Registry_System_Prompt_no_check.txt"
+        ]
+      },
+      "old_files_not_used": [
+        "Chatbot docs/Entity_Registry_System_Prompt_no_check.txt",
+        "Chatbot docs/Entity_Registry_Instructions.txt",
+        "Chatbot docs/Entity_Registry_Instructions.docx"
+      ],
+      "ambiguity_flags": [
+        "The Disambiguation Watch List CSV contains introductory rows before its effective table and needs structured cleanup for deterministic lookup."
+      ]
+    },
+    "clause_parser": {
+      "stage_label": "Clause Parser",
+      "system_prompt": "Chatbot docs/Claude chatbots/ClauseParser_SystemPrompt.docx",
+      "instructions": [
+        "Chatbot docs/Claude chatbots/ClauseParser_Instructions.txt"
+      ],
+      "examples": [
+        "Chatbot docs/Claude chatbots/ClauseParser_Examples.txt"
+      ],
+      "controlled_lists": [],
+      "boilerplate": [],
+      "input_requirements": [
+        "document_header",
+        "document_body"
+      ],
+      "expected_output_type": "verbatim_numbered_clauses",
+      "missing_files": [],
+      "substitutions": [
+        {
+          "email_name": "ClauseParser_SystemPrompt.doc",
+          "selected": "Chatbot docs/Claude chatbots/ClauseParser_SystemPrompt.docx",
+          "reason": "The available DOCX is the exact modern Word equivalent and matches the requested stage."
+        }
+      ],
+      "old_files_not_used": [
+        "Chatbot docs/Clause Parser.docx",
+        "Chatbot docs/General_Clause_Parsing_Guidelines.txt",
+        "Chatbot docs/Special_Rules-Interrogatories.txt",
+        "Chatbot docs/Special_Rules-Depositions.txt",
+        "Chatbot docs/Special_Rules-Bills_of_Complaint.txt",
+        "Chatbot docs/Special_Rules-Answers.txt"
+      ],
+      "ambiguity_flags": []
+    },
+    "occurrences_registry": {
+      "stage_label": "Occurrences Registry",
+      "system_prompt": "Chatbot docs/Claude chatbots/Occurrences_Registry_System_Prompt.txt",
+      "instructions": [
+        "Chatbot docs/Claude chatbots/Occurrences_Registry_Instructions.txt"
+      ],
+      "examples": [],
+      "controlled_lists": [
+        "Chatbot docs/Claude chatbots/Events_List.csv",
+        "Chatbot docs/Claude chatbots/Social_Identity_List.csv",
+        "Chatbot docs/Claude chatbots/Quantified_Statements_List.csv",
+        "Chatbot docs/Claude chatbots/Attributes_List.csv"
+      ],
+      "boilerplate": [
+        "Chatbot docs/Claude chatbots/Legal_Boilerplate.txt"
+      ],
+      "retrieval_resources": [
+        "Chatbot docs/Events_List_VectorLLM_v1.xlsx"
+      ],
+      "input_requirements": [
+        "document_header",
+        "clause_parser_output",
+        "entity_registry_output"
+      ],
+      "expected_output_type": "gathr_occurrences_registry_text",
+      "missing_files": [],
+      "substitutions": [
+        {
+          "email_name": "Qualified_Statements_List.csv",
+          "selected": "Chatbot docs/Claude chatbots/Quantified_Statements_List.csv",
+          "reason": "The current Occurrences prompt and instructions consistently call these Quantified Statements."
+        }
+      ],
+      "old_files_not_used": [
+        "Chatbot docs/Occurrence_Registry_Tagger_System_Prompt_old.txt",
+        "Chatbot docs/Occurrences_Registry_Instructions_GPT.docx",
+        "Chatbot docs/SYSTEM PROMPT Occurrences Registry_GPT.docx",
+        "Chatbot docs/Roles_List_old.csv",
+        "Chatbot docs/Roles_List.xlsx",
+        "Chatbot docs/Events_List-old.csv",
+        "Chatbot docs/Events_List.xlsx"
+      ],
+      "ambiguity_flags": [
+        "Social_Identity_List.csv replaces the older Roles_List dependency.",
+        "Events_List.csv and Events_List_VectorLLM_v1.xlsx contain the same 185 Event IDs; the vector workbook adds Vector Example and LLM Example fields."
+      ]
+    },
+    "tag_assembler": {
+      "stage_label": "Tag Assembler",
+      "system_prompt": "Chatbot docs/Claude chatbots/Assembler_System_Prompt.txt",
+      "instructions": [
+        "Chatbot docs/Claude chatbots/Assembly_Instructions.txt"
+      ],
+      "examples": [],
+      "controlled_lists": [],
+      "boilerplate": [],
+      "input_requirements": [
+        "document_header",
+        "clause_parser_output",
+        "entity_registry_output",
+        "occurrences_registry_output"
+      ],
+      "expected_output_type": "gathr_assembled_clause_tagset_text",
+      "missing_files": [],
+      "substitutions": [],
+      "old_files_not_used": [
+        "Chatbot docs/Assembler_System_Prompt_old.txt",
+        "Chatbot docs/Assembler_System_Prompt_old 6-16.txt",
+        "Chatbot docs/Assembly_Instructions_Old.txt"
+      ],
+      "ambiguity_flags": [
+        "The E-133-6-891 assembled sample uses older Form/PF/R0/C syntax and is not a current GATHR 5.1 gold output."
+      ]
+    }
+  }
+}

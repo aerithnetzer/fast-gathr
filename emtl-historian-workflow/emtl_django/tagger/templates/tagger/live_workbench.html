@@ -1,0 +1,341 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EMTL Live Workflow</title>
+  <link rel="stylesheet" href="{% static 'tagger/workbench.css' %}">
+  <style>
+    .live-shell{max-width:1440px;margin:0 auto;padding:24px}
+    .live-grid{display:grid;grid-template-columns:300px 1fr;gap:20px}
+    .live-card{background:#fff;border:1px solid #d7d5ce;border-radius:14px;padding:18px;margin-bottom:16px}
+    .live-card.active{border-color:#5f6f52}
+    .live-stage-list{position:sticky;top:18px}
+    .live-stage-row{padding:12px;border-bottom:1px solid #ece9df}
+    .live-stage-row strong{display:block}
+    .live-status{font-size:.88rem;color:#4d5148}
+    .live-ok{color:#32643c}
+    .live-error{background:#fff0ee;border:1px solid #d88475;padding:12px;border-radius:10px}
+    .live-notice{background:#eef6e9;border:1px solid #93aa82;padding:12px;border-radius:10px}
+    .live-source,.live-output{width:100%;box-sizing:border-box;white-space:pre-wrap;background:#f7f2df;color:#111;padding:14px;border:1px solid #ddd5bd;border-radius:10px;font:0.95rem/1.45 ui-serif,Georgia,serif}
+    .live-source{min-height:240px}
+    .live-output{min-height:220px;max-height:520px;overflow:auto}
+    textarea.live-source,textarea.live-output{resize:vertical}
+    .live-table{width:100%;border-collapse:collapse}
+    .live-table td,.live-table th{border-bottom:1px solid #e3e0d7;padding:8px;vertical-align:top}
+    .live-table th{text-align:left}
+    .entity-col{width:auto}.entity-id-col{width:120px}.entity-decision-col{width:245px}.entity-status-col{width:90px}
+    .live-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .live-actions form{display:inline-flex;gap:6px;align-items:center}
+    .entity-decisions{display:flex;gap:6px;align-items:flex-start;white-space:nowrap}
+    .entity-decisions form{margin:0}
+    .entity-decisions button,.entity-decisions summary{box-sizing:border-box;min-width:68px;padding:8px 10px;border-radius:6px;font-weight:700;text-align:center;cursor:pointer}
+    .decision-accept{background:#e7f4e9!important;border-color:#7aac82!important;color:#205d2c!important}
+    .decision-edit{display:block;background:#fff3cf!important;border:1px solid #d2aa3b!important;color:#735600!important;list-style:none}
+    .decision-edit::-webkit-details-marker{display:none}
+    .decision-reject{background:#fae8e8!important;border-color:#d18a8a!important;color:#8a2525!important}
+    .entity-edit{position:relative}
+    .entity-edit-form{position:absolute;right:0;z-index:5;display:grid;gap:7px;width:250px;margin-top:6px;padding:10px;background:#fffaf0;border:1px solid #d8cda8;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.13)}
+    .entity-status{font-weight:700;text-transform:capitalize}
+    .status-accepted{color:#2f7139}.status-pending{color:#71746f}.status-rejected{color:#a33333}.status-edited{color:#a47700}
+    .live-editor-actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px}
+    .live-helper{color:#5d6259;font-size:.92rem}
+    .live-dependency-note{margin:10px 0 0;padding:10px;border-radius:10px;background:#f7f2df;border:1px solid #ddd5bd}
+    .live-overlay{display:none;position:fixed;inset:0;background:rgba(20,24,21,.72);z-index:50;color:white;align-items:center;justify-content:center;text-align:center}
+    .live-overlay.show{display:flex}
+    .candidate-list{max-height:260px;overflow:auto}
+    .candidate{padding:8px;border-bottom:1px solid #ddd}
+    .headword-item{border:1px solid #dedbd2;border-radius:10px;padding:12px;margin:10px 0}
+    .event-review-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start}
+    .event-cut-text{margin:0;font-weight:400;line-height:1.5}
+    .event-review-state{font-weight:700;white-space:nowrap;text-transform:capitalize}
+    .event-suggestion{margin:10px 0}
+    .event-final-decision{margin:12px 0;padding:10px 12px;background:#eef6e9;border-left:4px solid #4f8a5b;border-radius:6px}
+    .similarity-choice{display:grid;gap:8px;margin:10px 0}
+    .similarity-choice select{max-width:520px}
+    @media(max-width:900px){.live-grid{grid-template-columns:1fr}.live-stage-list{position:static}}
+  </style>
+</head>
+<body>
+{% include "tagger/_site_header.html" %}
+<div class="live-shell">
+  <section class="live-card">
+    <p class="eyebrow">Live workflow</p>
+    <h2>{{ document.title }}</h2>
+    <p>{{ document.doc_id }}</p>
+    <p>Provider:
+      {% if provider_health.ok %}
+        <span class="live-ok">Connected · {% if provider_health.model %}{{ provider_health.model }}{% else %}{{ provider_health.provider }}{% endif %}</span>
+      {% else %}
+        <strong>Unavailable</strong> · {{ provider_health.error }}
+      {% endif %}
+    </p>
+    <div class="live-actions">
+      <a class="ghost-button" href="{% url 'tagger:home' %}">Change document</a>
+      <a class="download-button" href="{% url 'tagger:live_export' %}">Download formal export</a>
+    </div>
+  </section>
+
+  {% if notice %}<p class="live-notice">{{ notice }}</p>{% endif %}
+  {% if error %}<p class="live-error">{{ error }}</p>{% endif %}
+
+  <div class="live-grid">
+    <aside>
+      <section class="live-card live-stage-list">
+        <h3>Workflow</h3>
+        <form method="post" class="live-run-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="configure">
+          {% for stage in stage_choices %}
+            <label style="display:block;margin:8px 0">
+              <input type="checkbox" name="stages" value="{{ stage.stage_id }}" {% if stage.stage_id in requested_stages %}checked{% endif %}>
+              {{ stage.label }}
+            </label>
+          {% endfor %}
+          <button class="secondary-button">Apply selection</button>
+        </form>
+        {% if auto_included_labels %}
+          <p class="live-dependency-note">
+            To run your selected stage, the workflow also includes:
+            {{ auto_included_labels|join:", " }}. These earlier bots provide required inputs.
+          </p>
+        {% endif %}
+        {% for step in plan.steps %}
+          <div class="live-stage-row">
+            <strong>{{ step.label }}</strong>
+            <span class="live-status">{{ step.friendly_status }} · {{ step.friendly_action }}</span>
+            {% if step.auto_included_dependency %}<small>Added because a selected bot needs this input.</small>{% endif %}
+          </div>
+        {% endfor %}
+      </section>
+    </aside>
+
+    <main>
+      <section class="live-card">
+        <h3>Source document</h3>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_source">
+          <div class="live-editor-actions"><button class="secondary-button">Save source text</button></div>
+          <textarea class="live-source" name="source_text">{{ source_text }}</textarea>
+        </form>
+        <p class="live-helper">Bots use the uploaded text, or this latest saved version if you edit it here.</p>
+      </section>
+
+      {% if "summary_keywords" in plan.expanded_stages %}
+      <section class="live-card">
+        <h3>1 · Summary & Keywords</h3>
+        <p>Status: {{ outputs.summary_keywords.get_status_display }}</p>
+        <div class="live-actions">
+          {% if outputs.summary_keywords.status != "accepted" %}
+            <form method="post" class="live-run-form">{% csrf_token %}<input type="hidden" name="action" value="run_summary"><button>Run Summary & Keywords</button></form>
+          {% endif %}
+          {% if outputs.summary_keywords.status == "checking" %}
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="accept_stage"><input type="hidden" name="stage_id" value="summary_keywords"><button class="secondary-button">Accept output</button></form>
+          {% endif %}
+        </div>
+        {% if outputs.summary_keywords.raw_output %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_stage_text">
+            <input type="hidden" name="stage_id" value="summary_keywords">
+            <div class="live-editor-actions"><button class="secondary-button">Save edit</button></div>
+            <textarea class="live-output" name="raw_output">{{ outputs.summary_keywords.raw_output }}</textarea>
+          </form>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      {% if "clause_parser" in plan.expanded_stages %}
+      <section class="live-card">
+        <h3>2 · Clause Parser</h3>
+        <p>Status: {{ outputs.clause_parser.get_status_display }}</p>
+        <div class="live-actions">
+          {% if outputs.clause_parser.status != "accepted" and summary_ready %}
+            <form method="post" class="live-run-form">{% csrf_token %}<input type="hidden" name="action" value="run_clause"><button>Run Clause Parser</button></form>
+          {% endif %}
+          {% if outputs.clause_parser.status == "checking" %}
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="accept_stage"><input type="hidden" name="stage_id" value="clause_parser"><button class="secondary-button">Accept clauses</button></form>
+          {% endif %}
+        </div>
+        {% if outputs.clause_parser.raw_output %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_stage_text">
+            <input type="hidden" name="stage_id" value="clause_parser">
+            <div class="live-editor-actions"><button class="secondary-button">Save edit</button></div>
+            <textarea class="live-output" name="raw_output">{{ outputs.clause_parser.raw_output }}</textarea>
+          </form>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      {% if "entity_registry" in plan.expanded_stages %}
+      <section class="live-card">
+        <h3>3 · Entity Registry</h3>
+        <p>Status: {{ outputs.entity_registry.get_status_display }}</p>
+        {% if outputs.entity_registry.status != "accepted" and not entity_rows and summary_ready and clause_ready %}
+          <form method="post" class="live-run-form">{% csrf_token %}<input type="hidden" name="action" value="run_entity"><button>Run Entity Bot</button></form>
+        {% endif %}
+        {% if entity_rows %}
+          <div class="live-actions">
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="accept_remaining_entities"><button class="secondary-button">Accept all remaining</button></form>
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="finalize_entity"><button>Finalize Entity review</button></form>
+          </div>
+          <table class="live-table">
+            <thead><tr><th class="entity-col">Entity</th><th class="entity-id-col">ID / Type</th><th class="entity-decision-col">Decision</th><th class="entity-status-col">Status</th></tr></thead>
+            <tbody>
+              {% for item in entity_rows %}
+                <tr>
+                  <td><strong>{{ item.row.headword }}</strong><br>{{ item.row.raw_line }}</td>
+                  <td>{{ item.row.id }} · {{ item.row.type }}</td>
+                  <td>
+                    <div class="entity-decisions">
+                      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="entity_decision"><input type="hidden" name="row_index" value="{{ item.index }}"><input type="hidden" name="decision" value="accepted"><button class="decision-accept">Accept</button></form>
+                      <details class="entity-edit"><summary class="decision-edit">Edit</summary><form method="post" class="entity-edit-form">{% csrf_token %}<input type="hidden" name="action" value="entity_decision"><input type="hidden" name="row_index" value="{{ item.index }}"><input type="hidden" name="decision" value="edited"><input name="headword" value="{{ item.row.headword }}" aria-label="Headword"><input name="stable_id" value="{{ item.row.id }}" aria-label="Entity ID"><input name="record_type" value="{{ item.row.type }}" aria-label="Entity type"><button class="decision-edit">Save</button></form></details>
+                      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="entity_decision"><input type="hidden" name="row_index" value="{{ item.index }}"><input type="hidden" name="decision" value="rejected"><button class="decision-reject">Reject</button></form>
+                    </div>
+                  </td>
+                  <td><span class="entity-status status-{{ item.status }}">{{ item.status }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
+        {% if outputs.entity_registry.status == "checking" %}
+          <details>
+            <summary>Propose an Entity</summary>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="propose_entity">
+              <select name="record_type">{% for value in entity_record_types %}<option>{{ value }}</option>{% endfor %}</select>
+              <input name="headword" placeholder="Headword" required>
+              <input name="evidence_form" placeholder="Form / evidence">
+              <button>Add accepted Entity</button>
+            </form>
+          </details>
+        {% endif %}
+        {% if entity_proposals %}
+          <h4>User proposals</h4>
+          {% for proposal in entity_proposals %}
+            <div class="headword-item">
+              <strong>{{ proposal.headword }}</strong>
+              <br>{{ proposal.record_type }}: {{ proposal.headword }} [{{ proposal.proposed_id }}]{% if proposal.evidence_form %} | Form: {{ proposal.evidence_form }}{% endif %}
+              <span class="entity-status status-accepted">accepted</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </section>
+      {% endif %}
+
+      {% if "occurrences_registry" in plan.expanded_stages %}
+      <section class="live-card">
+        <h3>4 · Event Extraction</h3>
+        {% if summary_ready and clause_ready and entity_ready and not event_cuts %}
+          <form method="post" class="live-run-form">{% csrf_token %}<input type="hidden" name="action" value="run_eventcuts"><button>Extract Events</button></form>
+        {% endif %}
+        {% if event_cuts %}
+          <p>{{ event_cuts|length }} Event records available.</p>
+          {% if not headword_items %}
+            <form method="post" class="live-run-form">{% csrf_token %}<input type="hidden" name="action" value="run_lookup"><button>Match Event headwords</button></form>
+          {% endif %}
+        {% endif %}
+        {% if headword_pending_accept_count %}
+          <form method="post">{% csrf_token %}<input type="hidden" name="action" value="accept_remaining_headwords"><button class="secondary-button">Accept all remaining Event choices ({{ headword_pending_accept_count }})</button></form>
+        {% endif %}
+        {% for item in headword_items %}
+          <article class="headword-item">
+            <div class="event-review-heading">
+              <p class="event-cut-text">{{ item.event_cut.text }}</p>
+              <span class="event-review-state status-{{ item.status_class }}">{{ item.friendly_state }}</span>
+            </div>
+            {% if item.chooser_selected_candidate %}<p class="event-suggestion">Suggested Event Headword: <strong>{{ item.chooser_selected_candidate.event_id }} · {{ item.chooser_selected_candidate.headword }}</strong></p>{% endif %}
+            {% if item.final_assignment.event_id %}<p class="event-final-decision"><strong>Final Event Headword Decision: {{ item.final_assignment.event_id }} · {{ item.final_assignment.headword }}</strong></p>{% endif %}
+            <div class="entity-decisions">
+              {% if item.state == "llm_selected_candidate" %}
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="headword_action"><input type="hidden" name="item_id" value="{{ item.item_id }}"><input type="hidden" name="review_action" value="accept"><button class="decision-accept">Accept</button></form>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="headword_action"><input type="hidden" name="item_id" value="{{ item.item_id }}"><input type="hidden" name="review_action" value="edit"><button class="decision-edit">Edit</button></form>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="headword_action"><input type="hidden" name="item_id" value="{{ item.item_id }}"><input type="hidden" name="review_action" value="reject"><button class="decision-reject">Reject</button></form>
+              {% endif %}
+              {% if item.state == "llm_none_fit" %}
+                <button class="decision-accept" disabled>Accept</button>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="headword_action"><input type="hidden" name="item_id" value="{{ item.item_id }}"><input type="hidden" name="review_action" value="edit"><button class="decision-edit">Edit</button></form>
+                <button class="decision-reject" disabled>Reject</button>
+              {% endif %}
+            </div>
+            {% if item.state == "editing_headword" %}
+              <form method="post" class="live-run-form live-actions">{% csrf_token %}<input type="hidden" name="action" value="headword_action"><input type="hidden" name="item_id" value="{{ item.item_id }}"><input type="hidden" name="review_action" value="submit_proposal"><input name="proposed_headword" value="{{ item.edit_context.prefill_headword }}" placeholder="New headword" required><input name="definition_hint" placeholder="Definition (optional)"><button>Check similar headwords</button></form>
+            {% endif %}
+            {% if item.state == "proposal_similarity_review" %}
+              <p>Proposed Event Headword: <strong>{{ item.proposal.headword }}</strong></p>
+              <div class="similarity-choice">
+                <form method="post" class="live-actions">{% csrf_token %}<input type="hidden" name="action" value="headword_action"><input type="hidden" name="item_id" value="{{ item.item_id }}"><input type="hidden" name="review_action" value="choose_similar_existing"><label>Similar existing headword <select name="candidate_rank" required>{% for match in item.similarity_matches %}<option value="{{ match.rank }}">{{ match.event_id }} · {{ match.headword }} · {{ match.cosine_similarity|floatformat:4 }}</option>{% endfor %}</select></label><button class="decision-accept">Use selected existing</button></form>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="headword_action"><input type="hidden" name="item_id" value="{{ item.item_id }}"><input type="hidden" name="review_action" value="confirm_new_proposal"><button class="decision-edit">Keep my new proposal</button></form>
+              </div>
+            {% endif %}
+            <details><summary>View top candidates</summary><div class="candidate-list">{% for candidate in item.candidates %}<div class="candidate">{{ candidate.rank }} · {{ candidate.event_id }} · <strong>{{ candidate.headword }}</strong> · {{ candidate.score|floatformat:4 }}</div>{% endfor %}</div></details>
+          </article>
+        {% endfor %}
+      </section>
+
+      <section class="live-card">
+        <h3>5 · Occurrence Registry</h3>
+        <p>Status: {{ outputs.occurrences_registry.get_status_display }}</p>
+        {% if headword_review_complete and outputs.occurrences_registry.status != "accepted" %}
+          <form method="post" class="live-run-form">{% csrf_token %}<input type="hidden" name="action" value="run_occurrence"><button>Run Occurrence Registry</button></form>
+        {% endif %}
+        {% if outputs.occurrences_registry.status == "checking" %}
+          <form method="post">{% csrf_token %}<input type="hidden" name="action" value="accept_stage"><input type="hidden" name="stage_id" value="occurrences_registry"><button class="secondary-button">Accept Occurrence output</button></form>
+        {% endif %}
+        {% if outputs.occurrences_registry.raw_output %}
+          <form method="post">
+            {% csrf_token %}<input type="hidden" name="action" value="save_stage_text"><input type="hidden" name="stage_id" value="occurrences_registry">
+            <div class="live-editor-actions"><button class="secondary-button">Save edit</button></div>
+            <textarea class="live-output" name="raw_output">{{ outputs.occurrences_registry.raw_output }}</textarea>
+          </form>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      {% if "tag_assembler" in plan.expanded_stages %}
+      <section class="live-card">
+        <h3>6 · Assembler</h3>
+        <p>Status: {{ outputs.tag_assembler.get_status_display }}</p>
+        {% if outputs.occurrences_registry.status == "accepted" and outputs.tag_assembler.status != "accepted" %}
+          <form method="post" class="live-run-form">{% csrf_token %}<input type="hidden" name="action" value="run_assembler"><button>Run Assembler</button></form>
+        {% endif %}
+        {% if outputs.tag_assembler.status == "checking" %}
+          <form method="post">{% csrf_token %}<input type="hidden" name="action" value="accept_stage"><input type="hidden" name="stage_id" value="tag_assembler"><button class="secondary-button">Accept assembled tagset</button></form>
+        {% endif %}
+        {% if outputs.tag_assembler.raw_output %}
+          <form method="post">
+            {% csrf_token %}<input type="hidden" name="action" value="save_stage_text"><input type="hidden" name="stage_id" value="tag_assembler">
+            <div class="live-editor-actions"><button class="secondary-button">Save edit</button></div>
+            <textarea class="live-output" name="raw_output">{{ outputs.tag_assembler.raw_output }}</textarea>
+          </form>
+        {% endif %}
+      </section>
+      {% endif %}
+    </main>
+  </div>
+</div>
+<div class="live-overlay" id="live-overlay"><div><h2>Running workflow…</h2><p>This request may take several minutes. Keep this tab open.</p></div></div>
+<script>
+  const scrollKey = 'emtl-live-scroll-position';
+  const savedScroll = sessionStorage.getItem(scrollKey);
+  if (savedScroll !== null) {
+    requestAnimationFrame(function(){ window.scrollTo(0, Number(savedScroll)); });
+    sessionStorage.removeItem(scrollKey);
+  }
+  document.querySelectorAll('form').forEach(function(form){
+    form.addEventListener('submit', function(){ sessionStorage.setItem(scrollKey, String(window.scrollY)); });
+  });
+  document.querySelectorAll('.live-run-form').forEach(function(form){
+    form.addEventListener('submit',function(){
+      document.getElementById('live-overlay').classList.add('show');
+    });
+  });
+</script>
+</body>
+</html>

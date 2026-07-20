@@ -1,0 +1,303 @@
+<section class="panel event-headword-panel" aria-labelledby="event-headword-review-title">
+  <div class="panel-title">
+    <div>
+      <h4 id="event-headword-review-title">Event Headword Review</h4>
+      <p class="panel-kicker">Sample workflow using sample document</p>
+    </div>
+    <span class="status-badge stage-status-badge {{ event_headword_review.stage_status }}">{{ event_headword_review.stage_status_label }}</span>
+  </div>
+
+  <div class="event-headword-mode-strip">
+    <span>Sample workflow</span>
+    <span>Sample fixture</span>
+    <span>Suggested by demo review assistant</span>
+    <span>Live services disabled</span>
+    <span>Controlled Event list unchanged</span>
+  </div>
+
+  {% if event_headword_review.notice %}
+    <p class="event-headword-local-notice">{{ event_headword_review.notice }}</p>
+  {% endif %}
+
+  {% if event_headword_review.bulk_accept_remaining_count %}
+    <form method="post" action="{{ request.get_full_path }}" class="event-headword-action-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="event_headword_review_action">
+      <input type="hidden" name="event_headword_review_action" value="accept_remaining">
+      <input type="hidden" name="event_headword_review_item" value="{{ event_headword_review.selected_item.item_id }}">
+      <input type="hidden" name="target_clause" value="{{ event_headword_review.selected_item.clause_id }}">
+      <button type="submit" class="secondary-button compact-button">Accept all remaining suggestions ({{ event_headword_review.bulk_accept_remaining_count }})</button>
+    </form>
+  {% endif %}
+
+  <div class="event-headword-layout">
+    <aside class="event-headword-queue" aria-label="Event headword review queue">
+      <div class="event-headword-subtitle">
+        <strong>Review queue</strong>
+        <span>{{ event_headword_review.counts.event_review_items }} EventCuts</span>
+      </div>
+      <div class="event-headword-queue-list">
+        {% for item in event_headword_review.items %}
+          <a class="event-headword-queue-item {% if item.is_selected %}active{% endif %}" href="{{ item.url }}">
+            <span>
+              <strong>{{ item.event_cut.event_cut_id }}</strong>
+              <small>Clause {{ item.clause_id }}</small>
+              <small>{{ item.event_cut_text|truncatechars:74 }}</small>
+              {% if item.headword_preview %}
+                <small>Headword: {{ item.headword_preview }}</small>
+              {% endif %}
+            </span>
+            <span class="event-headword-state-badge {{ item.state_class }}">{{ item.state_label }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <article class="event-headword-detail">
+      <div class="event-headword-event-card">
+        <div class="event-headword-subtitle">
+          <strong>Current EventCut</strong>
+          <span>Clause {{ event_headword_review.selected_item.clause_id }}</span>
+        </div>
+        <p class="event-headword-eventcut-text">{{ event_headword_review.selected_item.event_cut_text }}</p>
+        <div class="event-headword-clause-meta">
+          <span>EventCut ID: {{ event_headword_review.selected_item.event_cut.event_cut_id }}</span>
+          <span>Trigger / lexical cue: {{ event_headword_review.selected_item.event_cut.trigger_or_lexical_cue }}</span>
+        </div>
+        {% if event_headword_review.selected_item.context_excerpt_found %}
+          <p class="event-headword-context-excerpt">{{ event_headword_review.selected_item.context_excerpt_html }}</p>
+        {% else %}
+          <p class="stage-warning-inline">The selected clause is highlighted in the left panel; this item did not provide an exact local context match.</p>
+        {% endif %}
+      </div>
+
+      <div class="event-headword-decision-banner {{ event_headword_review.selected_item.decision_class }}">
+        <div>
+          <strong>{{ event_headword_review.selected_item.decision_label }}</strong>
+          <p>{{ event_headword_review.selected_item.reason }}</p>
+        </div>
+        <span>{{ event_headword_review.selected_item.state_label }}</span>
+      </div>
+
+      {% if event_headword_review.selected_item.has_recorded_decision %}
+        <div class="event-headword-result-box {{ event_headword_review.selected_item.decision_class }}">
+          <strong>{{ event_headword_review.selected_item.recorded_decision_label }}</strong>
+          {% if event_headword_review.selected_item.review_decision.selected_candidate %}
+            <span>{{ event_headword_review.selected_item.review_decision.selected_candidate.event_id }} | {{ event_headword_review.selected_item.review_decision.selected_candidate.headword }} | rank {{ event_headword_review.selected_item.review_decision.selected_candidate.rank }}</span>
+          {% endif %}
+          {% if event_headword_review.selected_item.review_decision.proposed_headword %}
+            <span>{{ event_headword_review.selected_item.review_decision.proposed_headword.headword }} | {{ event_headword_review.selected_item.review_decision.proposed_headword.definition_hint }}</span>
+            <span>Similarity check will be added in the next phase. This does not update the official Event list.</span>
+          {% endif %}
+          {% if event_headword_review.selected_item.review_decision.rejected_candidate_scope %}
+            <span>Recorded against {{ event_headword_review.selected_item.review_decision.rejected_candidate_scope }} waiting-list candidates.</span>
+          {% endif %}
+          {% if event_headword_review.selected_item.review_decision.reviewer_note %}
+            <span>Note: {{ event_headword_review.selected_item.review_decision.reviewer_note }}</span>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if event_headword_review.selected_item.selected_candidate_label %}
+        <div class="event-headword-selection-box">
+          <strong>Suggested headword</strong>
+          <span>{{ event_headword_review.selected_item.selected_candidate_label }} | rank {{ event_headword_review.selected_item.selected_candidate.rank }} | {{ event_headword_review.selected_item.confidence_label }} confidence</span>
+          {% if event_headword_review.selected_item.selected_candidate_view.definition %}
+            <p>{{ event_headword_review.selected_item.selected_candidate_view.definition|truncatechars:220 }}</p>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if event_headword_review.selected_item.needs_historian_review.required %}
+        <div class="event-headword-selection-box warning">
+          <strong>Why review is needed</strong>
+          <span>{{ event_headword_review.selected_item.needs_historian_review.reason }}</span>
+        </div>
+      {% endif %}
+
+      {% if event_headword_review.selected_item.none_fit.is_none_fit %}
+        <div class="event-headword-selection-box warning">
+          <strong>No selected candidate</strong>
+          <span>{{ event_headword_review.selected_item.none_fit.reason }}</span>
+          <span>In the next interactive phase, a reviewer would inspect alternatives or propose a new headword.</span>
+        </div>
+      {% endif %}
+
+      {% if event_headword_review.selected_item.proposed_new_headword.suggested %}
+        <div class="event-headword-selection-box proposal">
+          <strong>Proposed headword: {{ event_headword_review.selected_item.proposed_headword_label }}</strong>
+          <span>{{ event_headword_review.selected_item.proposed_new_headword.definition_hint }}</span>
+          <span>{{ event_headword_review.selected_item.proposed_new_headword.reason }}</span>
+          <span>Similarity check will be added in the next phase. This does not update the official Event list.</span>
+        </div>
+      {% endif %}
+
+      <div class="event-headword-review-actions" aria-label="Local review actions">
+        {% for action in event_headword_review.selected_item.action_controls.simple_actions %}
+          <form method="post" action="{{ request.get_full_path }}" class="event-headword-action-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="event_headword_review_action">
+            <input type="hidden" name="event_headword_review_action" value="{{ action.action }}">
+            <input type="hidden" name="event_headword_review_item" value="{{ event_headword_review.selected_item.item_id }}">
+            <input type="hidden" name="target_clause" value="{{ event_headword_review.selected_item.clause_id }}">
+            <label>
+              <span>Optional note</span>
+              <input type="text" name="reviewer_note" placeholder="Add a short note">
+            </label>
+            <button type="submit" class="review-action {{ action.class }}">{{ action.label }}</button>
+          </form>
+        {% endfor %}
+
+        {% if event_headword_review.selected_item.action_controls.show_candidate_selector %}
+          <details class="event-headword-action-details">
+            <summary>{{ event_headword_review.selected_item.action_controls.candidate_action_label }}</summary>
+            <form method="post" action="{{ request.get_full_path }}" class="event-headword-choice-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="event_headword_review_action">
+              <input type="hidden" name="event_headword_review_action" value="choose_alternate">
+              <input type="hidden" name="event_headword_review_item" value="{{ event_headword_review.selected_item.item_id }}">
+              <input type="hidden" name="target_clause" value="{{ event_headword_review.selected_item.clause_id }}">
+              <label>
+                <span>Candidate</span>
+                <select name="candidate_rank" required>
+                  {% for candidate in event_headword_review.selected_item.candidates %}
+                    <option value="{{ candidate.rank }}">{{ candidate.rank }} | {{ candidate.event_id }} | {{ candidate.headword }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                <span>Optional note</span>
+                <input type="text" name="reviewer_note" placeholder="Why this candidate fits">
+              </label>
+              <button type="submit" class="review-action edit">Save chosen candidate</button>
+            </form>
+          </details>
+        {% endif %}
+
+        {% if event_headword_review.selected_item.action_controls.show_proposal_form %}
+          <details class="event-headword-action-details proposal">
+            <summary>Propose new headword</summary>
+            <form method="post" action="{{ request.get_full_path }}" class="event-headword-choice-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="event_headword_review_action">
+              <input type="hidden" name="event_headword_review_action" value="propose_new_headword">
+              <input type="hidden" name="event_headword_review_item" value="{{ event_headword_review.selected_item.item_id }}">
+              <input type="hidden" name="target_clause" value="{{ event_headword_review.selected_item.clause_id }}">
+              <label>
+                <span>Proposed headword</span>
+                <input type="text" name="proposed_headword" required>
+              </label>
+              <label>
+                <span>Definition hint</span>
+                <input type="text" name="definition_hint" placeholder="Optional short definition">
+              </label>
+              <label>
+                <span>Reviewer note</span>
+                <input type="text" name="reviewer_note" placeholder="Reason for proposal">
+              </label>
+              <p class="muted">Similarity check will be added in the next phase. This does not update the official Event list.</p>
+              <button type="submit" class="review-action proposal">Save provisional headword</button>
+            </form>
+          </details>
+        {% endif %}
+      </div>
+
+      <div class="event-headword-candidate-list">
+        <div class="event-headword-subtitle">
+          <strong>Candidate waiting list preview</strong>
+          <span>Top 5 of {{ event_headword_review.selected_item.candidates|length }}</span>
+        </div>
+        {% for candidate in event_headword_review.selected_item.candidates|slice:":5" %}
+          <details class="event-headword-candidate {% if candidate.is_selected_by_mock_chooser %}selected{% endif %}">
+            <summary>
+              <span class="event-headword-candidate-rank">{{ candidate.rank }}</span>
+              <span>
+                <strong>{{ candidate.event_id }} | {{ candidate.headword }}</strong>
+                <small>{{ candidate.definition|truncatechars:130 }}</small>
+              </span>
+              <span class="event-headword-score">{{ candidate.score|floatformat:3 }}</span>
+            </summary>
+            <div class="event-headword-candidate-body">
+              {% if candidate.is_selected_by_mock_chooser %}
+                <span class="event-headword-state-badge selected">Suggested</span>
+              {% endif %}
+              <p>{{ candidate.definition }}</p>
+              {% if candidate.snippet_preview %}
+                <p><strong>Closest snippet:</strong> {{ candidate.snippet_preview }}</p>
+              {% endif %}
+              <p class="muted">Source: {{ candidate.source.controlled_list }} row {{ candidate.source.excel_row }} | score type {{ candidate.score_type }}</p>
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+
+      <details class="event-headword-all-candidates">
+        <summary>Show remaining candidates #6-20</summary>
+        <div class="event-headword-candidate-list">
+          {% for candidate in event_headword_review.selected_item.remaining_candidates %}
+            <details class="event-headword-candidate {% if candidate.is_selected_by_mock_chooser %}selected{% endif %}">
+              <summary>
+                <span class="event-headword-candidate-rank">{{ candidate.rank }}</span>
+                <span>
+                  <strong>{{ candidate.event_id }} | {{ candidate.headword }}</strong>
+                  <small>{{ candidate.definition|truncatechars:130 }}</small>
+                </span>
+                <span class="event-headword-score">{{ candidate.score|floatformat:3 }}</span>
+              </summary>
+              <div class="event-headword-candidate-body">
+                {% if candidate.is_selected_by_mock_chooser %}
+                  <span class="event-headword-state-badge selected">Suggested</span>
+                {% endif %}
+                <p>{{ candidate.definition }}</p>
+                {% if candidate.snippet_preview %}
+                  <p><strong>Closest snippet:</strong> {{ candidate.snippet_preview }}</p>
+                {% endif %}
+                <div class="event-headword-detail-grid">
+                  <div>
+                    <strong>Vector examples</strong>
+                    {% for example in candidate.vector_examples %}
+                      <span>{{ example }}</span>
+                    {% empty %}
+                      <span class="muted">No vector examples in fixture.</span>
+                    {% endfor %}
+                  </div>
+                  <div>
+                    <strong>LLM-facing examples</strong>
+                    {% for example in candidate.llm_examples %}
+                      <span>{{ example }}</span>
+                    {% empty %}
+                      <span class="muted">No LLM-facing examples in fixture.</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="event-headword-snippets">
+                  <strong>Matched snippets</strong>
+                  {% for snippet in candidate.matched_snippets %}
+                    <span>{{ snippet.snippet_text }} | score {{ snippet.score|floatformat:3 }} | row {{ snippet.source_excel_row }}</span>
+                  {% empty %}
+                    <span class="muted">No matched snippets in fixture.</span>
+                  {% endfor %}
+                </div>
+                <p class="muted">Source: {{ candidate.source.controlled_list }} row {{ candidate.source.excel_row }} | score type {{ candidate.score_type }}</p>
+              </div>
+            </details>
+          {% endfor %}
+        </div>
+      </details>
+
+      <details class="event-headword-technical">
+        <summary>Technical provenance</summary>
+        <div class="event-headword-baseline">
+          <strong>Retrieval baseline</strong>
+          <span>{{ event_headword_review.baseline.encoder }} | {{ event_headword_review.baseline.strategy }} | {{ event_headword_review.baseline.waiting_list }}</span>
+        </div>
+        <pre>{
+  "event_headword_review_mode": "{{ event_headword_review.payload.event_headword_review_mode }}",
+  "chooser_mode": "{{ event_headword_review.provenance.chooser_mode }}",
+  "not_real_llm_output": "{{ event_headword_review.provenance.not_real_llm_output }}",
+  "schema_version": "{{ event_headword_review.payload.schema_version }}"
+}</pre>
+      </details>
+    </article>
+  </div>
+</section>

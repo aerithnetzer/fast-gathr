@@ -1,0 +1,593 @@
+TAG SET ASSEMBLY INSTRUCTIONS 
+
+Introduction
+
+These instructions govern the Tag Assembler. The Assembler receives two authoritative upstream inputs — an Entity Registry containing the full entity tag list and a clause-anchored Occurrences Registry containing Event (E:), Attribute (A:), and Quantified Statement (Q:) tags — and combines them into a complete, correctly ordered, GATHR-compliant, clause-anchored Tag Set.
+
+The Assembler has two functions:
+
+(1) Assembly — for each Clause, construct the Clause-level Tag Set by placing the supplied E:, A:, and Q: tags together with the Entity tags drawn from the Entity Registry, in the prescribed order (Part V). The Assembler suppresses any Entity tag that would merely duplicate a mention already carried by another emitted tag (the Mention Deduplication Rule, Part VI §6.1.2), and resolves co-references in the Clause text to entities established in the Entity Registry (Part VI §6.6).
+
+(2) Completeness checking — confirm that the assembled Tag Set is complete on its own terms: that every field a Clause triggers is filled or marked MISSING where the Entity Registry supplies no value; that the Mention Deduplication Rule has been applied; and that every supplied and every non-deduped triggered tag has been emitted (Part VII). 
+
+The Assembler does not recognize or re-tag Clause text, and it does not audit the Entity or Occurrences Registries for entities or occurrences they may have omitted. Where it cannot fill a triggered field, or a genuine problem or uncertainty arises, it records it in a Tagger Notes block (Part VIII).
+
+TWO RULES THAT APPLY TO EVERY TAG IN THE OUTPUT
+
+Trigger field rule: the Trigger: field in every tag must record the exact word or phrase from the current Clause text that triggers that tag. The Trigger: field is never simply copied from the Entity Registry. The Entity Registry Trigger: field lists all spelling variants attested across the whole document; the Clause-level Trigger: field records only the specific variant present in this Clause. 
+
+Empty field rule: a field is included in a tag only when it is supported by a lexical trigger in the Clause. Any field that has no corresponding word or phrase in the Clause text must be omitted entirely. Empty fields, blank values, and placeholder values such as "Unknown" are never permitted. (Field values need not be verbatim Clause text: normalized Headwords, normalized field values, and the imputed value of ImputedBirthYear, Part VI §6.3.3, all stand behind a Clause trigger and are licensed by it. Only the Trigger: field must be verbatim clause text.)
+
+The one exception is MISSING (see Part VII). Unlike a blank or "Unknown" field which must be left out of the tag, MISSING marks a field that IS lexically triggered but whose referenced entity has no Entity Registry value. It stands in place of a Headword and ID, taking no ID of its own. MISSING is never used for an untriggered field.
+
+══════════════════════════════════════════════════════
+
+PART I: THE GATHR TAG SYSTEM — WHAT THE ASSEMBLER NEEDS TO KNOW
+
+This Part explains what each tag type is and how to identify instances of it in Clause text. The Assembler must understand these categories in order to reproduce Entity tags correctly and to perform completeness checking.
+
+─────────────────────────────────────────────────────
+1. THE TWELVE GATHR TAG TYPES
+─────────────────────────────────────────────────────
+
+GATHR uses twelve tag types, divided into two groups.
+
+GROUP A — ENTITY TAGS (drawn from the Entity Registry by the Assembler)
+
+These nine types record stable entities that persist across the document. Each appears once in the Entity Registry with a canonical Headword and ID. The Assembler reproduces them in each Clause where they are triggered, subject to the Mention Deduplication Rule (Part VI §6.1.2).
+
+  P   — Person
+  SI  — Social Identity
+  R   — Relationship
+  L   — Location
+  I   — Institution
+  T   — Thing
+  INT — Intangible
+  V   — Vessel Name
+  TE  — Temporal Expression
+
+GROUP B — OCCURRENCE TAGS (supplied ready-made to the Assembler)
+
+These three types record what happens in a specific Clause. They are supplied by the Occurrences Registry and the Assembler places them without modification.
+
+  E  — Event
+  A  — Attribute
+  Q  — Quantified Statement
+
+In addition to the twelve tag types, GATHR recognizes two Field Types — When: and Modality: — that appear only as fields inside Event (E:) tags and never as standalone tags.
+
+─────────────────────────────────────────────────────
+2. ENTITY TAG TYPES — DEFINITIONS AND RECOGNITION
+─────────────────────────────────────────────────────
+
+2.1 Person (P:)
+
+What it is: a named individual human being.
+
+How to recognize it in Clause text: any personal name — first name, surname, or both — that refers to a specific individual. Common forms in these documents include full names ("Thomas Cusworthe"), surnames alone ("Rolffe"), titles with names ("Sir William"), and descriptive phrases with names ("Thomas the miller").
+
+Pronouns ("he," "she"), role labels ("the complainant," "the said deponent"), and unnamed descriptors ("the merchant," "a woman") are not themselves names and never warrant a new Person entity. When such an expression refers back to a Person already established in the Entity Registry, it is a co-reference and is handled under the co-reference rules in Part VI, §6.6. When the person it refers to is never named in the document, it is handled by the Social Identity (SI:) type.
+
+Monarch names (such as Queen Elizabeth) are tagged with a P: tag only when the monarch is an actor, counterparty, plaintiff in the legal action, or otherwise plays a role in the document. References to the monarch as part of regnal year dating, the full name of a court or institution, an adjectival descriptor for a royal office (e.g., "the King's goldsmith"), or legal boilerplate are never tagged as a Person.
+
+Clause-level Trigger field: record the exact spelling of the name as it appears in this Clause. Do not copy the Trigger from the Entity Registry (which lists all spelling variants from the whole document).
+
+2.2 Social Identity (SI:)
+
+What it is: an identifiable individual (or group) who is never named in the document, identified by occupation, office, status, a generic kinship term, or a generic person word. If a person is named anywhere in the document, their occupation, office, or status is recorded in the Identity: field of their P: tag, never as a separate SI: tag.
+
+SI: tags cover four kinds of identification:
+  Occupation — a trade or livelihood: merchant, baker, clothier, ropemaker
+  Office     — a formal royal, local, or institutional governmental, administrative, or judicial position: sheriff, alderman, constable, searcher, guild warden, judge, baron of the Exchequer
+  Status     — a social, legal, or civic condition: gentleman, knight, citizen, widow, foreigner, esquire
+  Kinship and generic person words — generic kinship terms (father, mother, son, wife) and the two Unidentified Person Headwords (UnidentifiedPerson, UnidentifiedChild), which replace generic terms such as "man," "woman," "youth," "people," "crowd," "townspeople"
+
+Kinship and generic-person Headwords warrant an Entity Registry entry only when accompanied by at least one of these additional identifying fields: (SecondaryIdentity:, Affiliation:, Attribute:, Residence:, or WorkLocation:). The Sex: and RelatedTo: fields do not count as a qualifying additional fields. When the text identifies an unnamed person by both a kinship/demographic term and an occupation, office, or status term, the occupation/office/status term is always the Headword and the kinship term moves to the SecondaryIdentity: field. 
+
+If the kinship or generic-person word is not accompanied by at least one qualifying additional identifying field, it will not appear as a tag in the Entity Registry. This is not a gap.
+
+Groups of people are recorded with the Plural: yes field, never by pluralizing the Headword. 
+	- A singular and a plural reference to the same Social Identity type in the same document receive separate SI: entries, since they refer to distinct referents.
+	- For example: Clause 1 says "deposition taken before a Baron of the Exchequer"; Clause 4 says "prior ruling of the Barons": this requires two Entity Registry entries. Pick the correct tag for each Clause if an SI: tag needs to be emitted.
+
+How to recognize it in Clause text: an occupational title, office name, status term, kinship term, or generic person word applied to a person who is never named in the document ("the said constable," "his clerk," "three wives from Bristol," "a man from Bristol").
+
+Note: SI: tags record identity, not event-specific roles. Event roles do not have Entity Registry tags. This is not a gap.
+
+Clause-level Trigger field: the exact occupational, office, status, kinship, or generic-person word(s) as they appear in this Clause.
+
+2.3 Relationship (R:)
+
+What it is: an enduring structural connection — among named or unnamed persons, things, intangibles, institutions, or locations — that exists beyond and outside the specific events described in the document.
+
+How to recognize it in Clause text: possessive constructions ("his son," "their father," "owner of," "lord of," "[PERSON] his X", "[PERSON]s X"), explicit kinship terms, ownership and business-partnership language, and containment language ("the flour in the barrel," "the crane at Bradberies Key"). Common triggers include:
+
+  Kinship:      son, daughter, father, mother, brother, sister, wife, husband, widow of
+  Ownership:    owner of, proprietor of, [Person]s [Thing/Land/Ship/Intangible], the proper X of [Person], [Person] his [Thing/Land/Ship/Intangible]
+  Employment:   master of, servant to, apprentice of, his servant
+  Householding: house of [Person], [Person]'s house, dwelling of, [Person] his house
+  Containment:  [Thing] in/at [Thing or Location], unnamed generic [Location] in/at named [Location]
+
+Note: a connection that describes only what happened in a single event (e.g., "he sold cloth to John") is NOT a Relationship — it is an Event describing an Event role. A Relationship must be a structural, continuing tie. Ordinary residence, travel to or through, or mere presence in a place is never tagged with an R: tag.
+
+A person-to-person R: tag requires at least one anchoring party: a named Person (P:) or a Social Identity (SI:) that has an Entity Registry entry. The other party may be an entry-less controlled-vocabulary SI reference — e.g., a bare kinship term such as "daughter" with no Entity Registry instance entry of its own. An entry-less SI party is valid; it is never treated as invalid or replaced with MISSING.
+
+Clause-level Trigger field: the exact word or phrase that triggers the relationship (e.g., "sonne," "owner," "wyfe," "in the chest").
+
+2.4 Location (L:)
+
+What it is: any identifiable physical place. Locations include settlements (cities, towns, villages, parishes), regions (counties, countries), built spaces (houses, rooms, shops, warehouses), infrastructure (ports, roads, wharves, docks), and natural features (rivers, fields, woods). Locations may be named ("Bread Street") or unnamed but spatially concrete ("in the barn").
+
+How to recognize it in Clause text: named places of any scale ("London," "Bristoll," "the Custome House," "Watling Streete"), as well as unnamed but spatially concrete references ("the said warehouse," "his shoppe," "the wharf," "the pasture").
+
+Note: only named Locations carry LocatedIn: fields. The containment of a generic, unnamed location within a named location is recorded with an R: Located at/in tag, not a LocatedIn: field.
+
+Clause-level Trigger field: the exact place name or spatial phrase as it appears in this Clause.
+
+2.5 Institution (I:)
+
+What it is: a formal, organized body with a stable identity that exists independently of any particular person or event. Institutions include courts, guilds, trading companies, governing bodies, and ecclesiastical bodies.
+
+How to recognize it in Clause text: named organizations, courts, or corporate bodies — e.g., "the Court of Admiraltie," "the Mercers Companie," "the Custome House" (when referring to the body, not the building). Distinguish from Location (L:), which is the physical place, and from the office an individual holds within an institution, which is a Social Identity term.
+
+Clause-level Trigger field: the exact name of the institution as it appears in this Clause.
+
+2.6 Thing (T:)
+
+What it is: a physical object with material form — goods, raw materials, containers, tools, weapons, animals, foodstuffs, and money when treated as a physical object (coin, bullion).
+
+How to recognize it in Clause text: named physical objects or commodities: "clothe," "woll," "a punshyon" (puncheon/barrel), "kyne" (s.v. cattle), "playing cardes," "flaxe," "a cheste." Also physical containers and packaging terms: barrel, sack, chest, pack.
+
+Distinction from INT: if the term denotes a physical container or object, use T:. If it denotes an abstract unit of measure (yard, pound, gallon), use INT:. Terms that function both as standardized units and as physical containers (e.g., "firkin," "bushel") are tagged T:.
+
+Clause-level Trigger field: the exact word(s) for the physical object as they appear in this Clause.
+
+2.7 Intangible (INT:)
+
+What it is: a non-physical entity with legal, economic, or conceptual significance — something that can be owed, claimed, assigned, denied, affirmed, or discharged but has no physical form.
+
+Intangibles include:
+  — debts, credits, obligations, bonds
+  — contracts or bargains as legal arrangements
+  — ownership rights and title (not the physical land)
+  — abstract units of measure (yard, pound weight, gallon, mile) when used as units, not containers
+  — money as a category, medium, or named currency (English pound, Spanish real) — NOT specific amounts
+
+How to recognize it in Clause text: legal and economic abstractions ("a debt," "the said bargayne," "his bond," "the custodye"), named currency types ("English moneye," "riales"), and abstract unit names used in measurement contexts.
+
+Do NOT use INT: for: specific monetary amounts (those go in Q: tags), physical coin or bullion (T:), or bulk commodities.
+
+Clause-level Trigger field: the exact word or phrase as it appears in this Clause.
+
+2.8 Vessel Name (V:)
+
+What it is: the proper name of a specific ship. Vessel names often include a home port ("Grace of Dartmouth," "Lion of Bristoll"); the port designation forms an integral part of the Vessel Name, and the home port must also be separately tagged with a Location (L:) tag.
+
+How to recognize it in Clause text: a named ship — look for vessel names, often preceded by words like "the shippe called," "the barke," or simply a capitalized ship name. Generic vessel terms ("a shippe," "the boate," "barke," "ketch," "lighter") without a proper name are tagged as T: (Things), not V:.
+
+Clause-level Trigger field: the exact spelling of the vessel name as it appears in this Clause.
+
+2.9 Temporal Expression (TE:)
+
+What it is: a named, non-numeric time designation that appears lexically in the text. TE: tags are vocabulary items, not dates or calculations.
+
+Include: names of days of the week and months; named feast days and saint's days (Easter, Michaelmas, St Bartholomew's Day, Lady Day); holidays; seasons (spring, harvest, midsummer); court terms (Trinity term, Hilary term); times of day (morning, evening, night season, of the clock); and named historical periods ("plague time," "King Edward's time").
+
+These terms are tagged TE: whenever they occur, even inside fully expressed dates. Example: in "the second day of November 1601," November is tagged with a TE: tag; the full date 2 November 1601 appears only in the When: field of the relevant E: tag.
+
+Do NOT include: bare years, regnal years and dates based on regnal years, relative time expressions ("two years ago"), or generic temporal words ("day," "week," "month," "year"). Those appear only in the When: field of E: tags, never as standalone TE: tags. TE: tags are never derived from the Header.
+
+Clause-level Trigger field: the exact spelling of the temporal expression as it appears in this Clause.
+
+
+─────────────────────────────────────────────────────
+3. OCCURRENCE TAG TYPES — WHAT THEY ARE (FOR REFERENCE)
+─────────────────────────────────────────────────────
+
+The Assembler receives E:, A:, and Q: tags pre-constructed and places them without modification. The following definitions help the Assembler perform completeness checking.
+
+3.1 Event (E:)
+
+What it is: an assertion that something happened, did not happen, was claimed to have happened, or was asked about happening. Events include actions, omissions, transactions, procedural steps, prior speech acts, and directed mental acts (knowing, intending, trusting, suspecting) directed at someone or something specific.
+
+How to recognize it in Clause text: any main verb or verbal phrase that asserts an action or occurrence: "sold," "delivered," "paied," "refused to pay," "did comend," "had the custodye of." A Clause that contains a verb asserting something happened should have at least one E: tag.
+
+Do NOT expect an E: tag for: Clauses that only describe properties or states of entities (those use A: tags), or legal boilerplate framing. Clauses that contain only legal boilerplate take no tags at all.
+
+3.2 Attribute (A:)
+
+What it is: a descriptive property of an entity — a quality, condition, or state explicitly assigned to a P:, L:, I:, T:, INT:, or V: entity.
+
+How to recognize it in Clause text: attributive adjectives ("honest man," "defective goods"), predicate adjectives ("the goods were defective"), nominalized qualities explicitly linked to an entity ("the order and playnenes of the same accounte booke"), and fixed descriptive phrases ("of good fame," "well conditioned"). The trigger is always a descriptive word or phrase modifying a specific entity.
+
+A: tags never take an SI entity as their Object. Attributes of unnamed persons are recorded in the Attribute: field of the SI: tag in the Entity Registry, not as standalone A: tags.
+
+Do NOT confuse with: the Attribute: field inside an E: tag, which records adverbial modifiers of the action itself ("sold fraudulently"), not properties of entities. Adverbial qualifiers of actions are never standalone A: tags.
+
+3.3 Quantified Statement (Q:)
+
+What it is: a structured numerical expression associated with an entity — a count, measurement, monetary amount, rate, share, or equivalence.
+
+How to recognize it in Clause text: any explicit number or quantity word in connection with a quantity, measure, price, or rate — "twentie kyne," "xˢ per ton," "2£ vijˢ," "one moiety," "Cxx spanishe riales," "severall barels." The quantity must be explicitly stated; quantities must not be inferred.
+
+
+─────────────────────────────────────────────────────
+4. TAG SYNTAX
+─────────────────────────────────────────────────────
+
+All tags in the Tag Set must follow GATHR tag syntax.
+
+4.1 Tag Structure
+
+TYPE: Headword [ID] | Trigger: Value | Key1: Value1 [ID] | Key2: Value2 [ID] | ...
+
+  • TYPE: is the standard abbreviation for the ontological category
+  • Headword is the normalized canonical label
+  • [ID] is the unique identifier for that Headword or field value
+  • Trigger: records the exact surface text from the Clause that triggers the tag
+  • Key: Value is a structured field. Every field that references an entity records that entity's Headword and ID together as Key: Value [ID]; an ID is never written without its value — except MISSING, which stands alone; see Part VII.
+
+4.2 Field Syntax
+
+Each field must follow the syntax: | Key: Value
+
+Rules:
+  • A pipe | must precede every field except the TYPE
+  • Exactly one colon per field
+  • No empty fields; no placeholder values (e.g., "Unknown")
+  • Only the Trigger: field may contain multiple values; variants are separated by semicolons
+
+MISSING is not a placeholder in this sense; it is permitted per the Missing Values rule (§7.2).
+
+4.3 Tag Syntax Rules
+
+  • One TYPE per tag; one entity per TYPE; one tag per line
+  • One Trigger: field per tag
+  • Non-Trigger: fields of the same kind may repeat within a single tag, each as a separate pipe-separated Key: Value pair
+  • Tags may wrap across visual lines; true line breaks occur only between tags, never within a single tag
+
+══════════════════════════════════════════════════════
+
+PART II: SUPPLIED DATA
+
+The Assembler receives three inputs.
+
+1. DOCUMENT HEADER
+
+The Header contains document-level metadata. It is delimited by a first line beginning with "DocID:" and a final line containing "<END>".
+
+The Header is reproduced verbatim at the top of the Assembler's output. It is never tagged or modified. The Assembler may consult Header information (e.g., party identification) when resolving co-references under Part VI, §6.6.
+
+2. ENTITY REGISTRY
+
+The Entity Registry is the authoritative source of all Entity Headwords, IDs, and field values. The Assembler draws Entity tags from this registry to construct each Clause-level tag set.
+
+The Assembler must not create new Entities or modify existing Headwords, IDs, or field values.
+
+3. OCCURRENCES REGISTRY
+
+The Occurrences Registry is the output of the Occurrence Registry Tagger. It consists of a sequence of Clause blocks in ClauseID order. Each block contains:
+
+  • a ClauseID (three-digit number: 001, 002, 003, …)
+  • the verbatim Clause text
+  • zero or more E:, A:, and Q: tags already placed beneath the Clause text (all E:, then all A:, then all Q:)
+
+Clauses with no Events, Attributes, or Quantified Statements have no tags beneath them. This data is authoritative for Occurrence tagging. The Assembler must not modify or supplement the E:, A:, and Q: tags except to place them in the correct order within the assembled Clause-level tag set.
+
+══════════════════════════════════════════════════════
+
+PART III: OUTPUT FORMAT
+
+The Assembler's output is the complete Tag Set. It consists of:
+
+(1) The Document Header, reproduced verbatim.
+
+(2) A sequence of Clause blocks in ClauseID order. Each Clause block contains:
+  • the ClauseID
+  • the Clause text, reproduced verbatim
+  • the complete tag set for that Clause (see Part V)
+  • a Tagger Notes block, if gaps were identified during completeness checking (see Part VIII)
+
+══════════════════════════════════════════════════════
+
+PART IV: ASSEMBLY PROCEDURE
+
+For each Clause, work through these five steps in order.
+
+STEP 1 — Read the supplied Occurrence tags
+
+Read the E:, A:, and Q: tags supplied beneath a Clause by the Occurrences Registry. These are the Occurrence tags for this Clause. They are authoritative and will be placed without modification.
+
+STEP 2 — Identify the entities referenced in this Clause and build candidate Entity tags
+
+Scan the Clause text for references to entities in the Entity Registry. References are of two kinds:
+
+(a) Lexical references — the entity is named or denoted in the Clause by a surface form matching the Entity Registry Trigger: field (primary) or Headword (secondary).
+
+(b) Co-references — the entity is referenced only by a pronoun, role label, partial name, "the said X" formula, or social-identity term that resolves to an entity established elsewhere in the document. Resolve co-references at the document level, consulting the Header and the whole document processed so far (Part VI §6.6).
+
+For every entity referenced — whether lexically or by resolved co-reference — build a candidate Entity tag using the Headword and ID from the Registry and the fields the Clause triggers (Part VI §6.3). Use the definitions in Part I, Section 2 to identify what type of entity each reference represents. Co-reference resolution never creates new entities, redefines identity, or alters the Entity Registry; it only determines which previously established referent is being invoked again.
+
+Do not build candidates for entities not referenced in this Clause, even if they appear elsewhere in the document.
+
+STEP 3 — Apply the Mention Deduplication Rule, then assemble the tag set in order
+
+Suppress each candidate Entity tag that the Mention Deduplication Rule (Part VI §6.1.2) removes. Then emit the surviving Entity tags together with the supplied E:, A:, and Q: tags and the Registry's R: and TE: tags, in the order defined in Part V.
+
+STEP 4 — Run the completeness check
+
+See Part VII for the completeness-checking procedure.
+
+STEP 5 — Output the Clause block
+
+Do this process for each Clause.
+
+══════════════════════════════════════════════════════
+
+PART V: TAG ORDERING WITHIN A CLAUSE
+
+5.1 Clause-Level Structure
+
+Each Entity is followed immediately by the Relationship (R:) and then the Attribute (A:) tags related to it, with the R: and A: tags indented beneath their Entity to make the tag set easier to check.
+
+Emit the tags of a Clause in the following order. Entity tags of types P, SI, L, I, T, INT, and V appear only if they survive the Mention Deduplication Rule (Part VI §6.1.2). E:, R:, A:, Q:, and TE: tags are always emitted when present.
+
+  1.  All E: tags, in the order supplied by the Occurrences Registry (narrative order; never reordered)
+  2.  Each Person (P:) tag, with its R: then A: tags indented beneath it
+  3.  Each Social Identity (SI:) tag, with its R: tags indented beneath it (SI: tags take no standalone A: tags)
+  4.  Each Location (L:) tag, with its R: then A: tags indented beneath it
+  5.  Each Institution (I:) tag, with its R: then A: tags indented beneath it
+  6.  Each Thing (T:) tag, with its R: then A: tags indented beneath it
+  7.  Each Intangible (INT:) tag, with its R: then A: tags indented beneath it
+  8.  Each named Vessel (V:) tag, with its R: then A: tags indented beneath it
+  9.  Q: tag(s)
+  10. TE: tag(s)
+
+When an Entity tag is suppressed under the Mention Deduplication Rule (§6.1.2), its related R: and A: tags are still emitted and keep their place in the interleaved order — at the position the omitted Entity tag would have occupied.
+
+5.2 Clauses with Multiple Events
+
+All E: tags are emitted first, in supplied order, followed by the single interleaved Entity set defined in 5.1. Entity tags are never repeated per Event: each surviving entity appears once in the Clause, regardless of how many of the Clause's Events it participates in.
+
+══════════════════════════════════════════════════════
+
+PART VI: ENTITY TAG REPRODUCTION
+
+6.1 Which Entities to Include
+
+6.1.1 Assembling candidate Entity tags
+For every entity lexically triggered in the Clause — whether by direct naming of the entity or by a co-reference resolved under §6.6 — assemble a candidate Entity tag using the same Headword and ID as the Entity Registry and including the fields the Clause triggers (§6.3). Use the entity-type definitions in Part I to identify what kind of entity each reference represents. Do not assemble candidates for entities not referenced in this Clause, even if they appear elsewhere in the document.
+
+  • An entity that appears in the Clause only as a value inside another tag's field — e.g., a Location the registry supplies in another entity's LocatedIn: with no surface form of its own — is not lexically triggered and gets no candidate; the carrying field is its only representation.
+
+6.1.2 The Mention Deduplication Rule
+Do not emit an Entity tag of type P, SI, L, I, T, INT, or V when ALL of the following hold:
+  (1) the tag is minimal — it includes only the base syntax (Headword and Trigger:) or only Headword, Trigger:, and Sex: for P and SI tags, and no other field; AND
+  (2) the same entity already appears, by its Headword [ID], in a field of another tag anchored to this Clause and not suppressed by the Deduplication Rule.
+
+Exception — missing variant. If (1) and (2) both hold, but the Clause's Trigger for the entity is a direct nominal form (a name or term spelling, not a co-reference) that is NOT among the entity's Trigger: variants in the Entity Registry, build the tag anyway. 
+  • Record the surface form as it appears in the Clause and add a Tagger Note: "ER gap: [field]: [surface word/phrase]."
+  • A co-reference form — a pronoun, or a descriptor such as "the said miller" — is never a listed variant and never invokes this exception.
+
+This rule governs only standalone Entity tags. E:, A:, Q:, R:, and TE: tags are never suppressed by it and are always emitted in place. 
+
+  • A lexically-triggered tag carrying any triggered field beyond the base syntax (or base syntax plus Sex: for P and SI tags) is not minimal and is always emitted with all of its lexically-triggered fields. Examples: a P: tag with Residence:, Identity:, Affiliation:, WorkLocation:, ImputedBirthYear:; an L: tag with LocatedIn:; a V: tag with HomePort:.
+ 
+  • The rule is applied independently in each Clause. The same entity is typically suppressed in one Clause (a minimal Event participant) and emitted in another (where the Clause triggers a new field for it, or where it appears outside any Event tag).
+
+6.2 Base-Syntax Entity Tags (T, INT, I, TE)
+
+These four Entity types use base syntax. 
+
+  T   — Thing
+  INT — Intangible
+  I   — Institution
+  TE  — Temporal Expression
+
+Base syntax: X: Headword [X-ID] | Trigger:
+
+T, INT, I are always minimal and thus suppressed if they fall under the Mention Deduplication Rule (§6.1.2). 
+
+TE is never suppressed (§6.1.2).
+
+6.3 Non-Base-Syntax Entity Tags (P, SI, R, L, V)
+
+These five Entity types may contain additional fields beyond base syntax:
+
+  P  — Person
+  SI — Social Identity
+  R  — Relationship
+  L  — Location
+  V  — Vessel Name
+
+For these types, reproduce the tag using the same Headword and ID as in the Entity Registry. Include additional fields only when they are lexically triggered in the Clause. (R: is never minimal and is never suppressed; see §6.1.2.).
+
+The Assembler decides only which Trigger matches the Clause and whether each field is lexically triggered. 
+
+
+6.3.1 Field inclusion rule
+A field is included in a reproduced Entity tag only when the Clause contains a lexical trigger — a word or phrase that directly corresponds to that field's value, or to the surface form of the entity referenced by that field. If no lexical trigger is present in the Clause, the field must be omitted entirely, regardless of whether that field appears in the Entity Registry entry for that entity.
+
+This rule applies with particular force to Person (P:) tags, where the Entity Registry entry may contain many fields. The following Person fields must be omitted unless the Clause contains an explicit word or phrase supporting them:
+
+Suffix: — omit unless the generational suffix appears in the Clause
+Alias: — omit unless the alias appears in the Clause
+Sex: - omit under the Mention Deduplication Rule (§6.1.2) unless another non-Trigger: field is also present and Sex: is lexically triggered
+Identity: — omit unless the Clause contains an occupational, office, or status term for this person.  
+Affiliation: — omit unless the Clause names the institution to which the person belongs
+Residence: — omit unless the Clause names the person's place of habitation
+WorkLocation: — omit unless the Clause names where the person works or operates
+Subscription: — omit unless the Clause contains a signature or mark indicator
+
+The Entity Registry is the authority on what fields exist in the document for an entity. The Clause is the authority on which fields (or Key:Value pairs in the case of repeated fields under §6.3.2) are reproduced in any given tag set. These are separate questions and must not be conflated. 
+
+Whether a tag carries any lexically-triggered fields also determines whether it is minimal for the purposes of the Mention Deduplication Rule, §6.1.2.
+
+6.3.2 Multi-valued fields. 
+When the Entity Registry records more than one Key:Value pair for the same field — for instance a Person with two Residence: locations attested in different parts of the document — lexical triggering applies value by value, not to the field as a whole. 
+
+In a given Clause, reproduce only the value(s) that Clause lexically triggers:
+ • if the Clause triggers one listed value, include that Key:Value pair only;
+ • if it triggers more than one, include them as pipe-separated Key:Value pairs exactly as the Registry records them;
+ • if it triggers none, omit the field.
+
+The Registry will not record which value belongs to which Clause; the Assembler resolves that by triggering, the same way it selects the Trigger variant attested in the Clause (§6.5). 
+
+6.3.3 Exception — ImputedBirthYear
+Include the ImputedBirthYear field in a P: tag when the Clause contains an explicit age statement (e.g., "aged 43"). The age expression in the Clause licenses inclusion of the ImputedBirthYear value from the Entity Registry. Do not recompute or modify the value.
+
+6.4 Entity Tag Schemas (Non-Base-Syntax Types)
+
+Reproduce with the following field order. Include only fields lexically triggered in the Clause.
+
+P:   Headword [P-ID] | Trigger: | Suffix: | Alias: | Sex: | ImputedBirthYear: | Identity: [SI-ID] | Affiliation: [I-ID] | Residence: [L-ID] | WorkLocation: [L-ID] | Subscription:
+
+SI:  Headword [SI-ID] | Trigger: | Sex: | SecondaryIdentity: [SI-ID] | Affiliation: [I-ID] | Attribute: [A-ID] | Residence: [L-ID] | WorkLocation: [L-ID] | RelatedTo: [P-ID/SI-ID/L-ID/T-ID/INT-ID/V-ID] | Plural:
+
+R:   Headword [R-ID] | Trigger: | Subject: [P-ID/SI-ID/L-ID/I-ID/T-ID/INT-ID/V-ID] | Object: [P-ID/SI-ID/T-ID/INT-ID/L-ID/I-ID/V-ID] | Inverse:
+
+L:   Headword [L-ID] | Trigger: | LocatedIn: [L-ID]
+
+V:   Headword [V-ID] | Trigger: | HomePort: [L-ID]
+
+Note on the P: syntax: an occupation, office, or status term assigned to a named person is an Identity: field in the P: tag. It does not also get an SI: tag in the Entity Registry.
+
+Note on the SI: syntax: the Plural: field has only one valid value, "yes," and is included only when the tag collectively records more than one person. If an SI term is used in both the singular and the plural, it should have more than one SI entry in the Entity Registry. If reproducing the tag, select the entry with the Plural: value that corresponds to the lexical trigger (no Plural: field for singular SI term, Plural: yes for plural SI term).
+
+Reproduce the Entity Registry's R: tags without re-deriving Subject, Object, or Inverse. The Trigger: field is the only part the Assembler inputs per Clause. Record only the spelling variant(s) present in this Clause (§6.5), never the Entity Registry entry's full variant list.  
+
+Any field in a P, SI, L, or V tag with an [ID] value may instead carry the value MISSING when the Entity Registry supplies no value for it (see Part VII). MISSING stands alone and takes no ID.
+
+6.5 The Trigger Field in Reproduced Tags
+
+The Entity Registry Trigger field should enumerate every spelling variant of the entity attested across the document. For a reproduced Entity tag, select the variant(s) that occur in this Clause and record only those — never the registry's full variant list. The value is therefore a registry variant, selected by comparison with the Clause; it coincides with the surface form present in the Clause. 
+
+Multiple spelling variants must be semi-colon separated and in the same Key:Value pair. Do not create additional Trigger: Key:Value pairs for multiple spelling variants.
+
+Example: if the Entity Registry Trigger field reads "Rolffe; Rolf; Rolfe" (variants found across the document) and this Clause contains "Rolffe," the Clause-level Trigger field reads | Trigger: Rolffe. If the Clause contains both "Rolffe" and "Rolf," it reads | Trigger: Rolffe; Rolf.
+
+The Assembler records a Trigger directly from clause text in two situations:
+ (1) the Clause contains only a co-reference surface form, which is not an enumerated registry variant — is governed by §6.6.2.
+ (2) the Entity Registry is missing the spelling variant found in the Clause. This is governed by §6.1.2. When filling in a missing spelling variant, minimize to the term itself. Do not include article, adjectives, or phrases like "the said" or "the same."
+
+6.6 Co-Reference Resolution
+
+A co-reference arises when a Clause refers to an entity established elsewhere in the document not by its name or lexical form but by a pronoun, role label, partial name, "the said X" / "the same X" formulas, or social-identity term. Examples of person co-references: "he," "the said John," "Sir William," "this examinate," "the complainant," "the said servant," "the widow." Examples of non-person co-references: "the place aforesaid," "that horse," "the said ship," "the same company."
+
+6.6.1 Resolving co-references
+The Assembler resolves each co-reference to the entity it denotes, using the Entity Registry, the Header, and the document processed so far (e.g., "the complainant" resolves to the party named in the Header or at the beginning of the document; "this examinate" resolves to the deponent introduced at the head of the deposition). A resolved co-reference counts as a reference to that entity for the purposes of building a candidate Entity tag (§6.1.1) or filling in a field. Co-reference resolution never creates new entities, redefines identity, or alters the Entity Registry.
+
+Once a co-reference is resolved, the candidate tag it produces is treated exactly like any other candidate Entity tag: it is subject to the Mention Deduplication Rule (§6.1.2). There is no separate emit/suppress logic for co-references. In consequence:
+  • a co-referenced entity that is a minimal Event participant is suppressed if it is included as a field in an emitted tag;
+  • a co-referenced entity to which the Clause adds a new field is emitted with that field;
+  • a co-referenced entity that appears as a field in no emitted tag is emitted as its own line.
+A co-referenced TE tag is always emitted because TE tags are always emitted (§6.1.2).
+
+6.6.2 The Trigger field of a co-reference tag
+When a co-reference tag is emitted, its Trigger: field records the surface co-referential expression based on the reference that appears in the Clause ("his wife," "this deponent," "the said ship") — not the resolved entity's canonical name. Because this expression is a pronoun, role label, or partial reference, it will generally not be among the entity's enumerated Triggers in the Entity Registry; it is recorded directly from the Clause, following the normal Trigger rule. Example: a Clause referring to a person only as "his wife," resolved to Jane Smith [P-0123] and not suppressed under 6.1.2, produces:
+
+P: Jane Smith [P-0123] | Trigger: wife
+
+plus any additional fields lexically triggered in the Clause.
+
+Record the minimal span that justifies the reference: drop leading articles, possessives, and adjectives that are not internal to a necessary phrase. Examples: "his wife" → Trigger: wife; "the said miller" → Trigger: miller; "the said ship" → Trigger: ship.
+
+All Mention Deduplication rules (§6.1.2) apply to co-reference tags as normal.
+
+══════════════════════════════════════════════════════
+
+PART VII: COMPLETENESS CHECKING
+
+The Assembler reproduces and assembles; it does not recognize or construct. Its completeness obligation is to its own output: that everything the two Registries supplied, and everything the Clause lexically triggers, is present and correctly assembled.
+
+7.1 What a Complete Tag Set Contains
+After assembling the tag set for a Clause, confirm all of the following. These obligations are stated in full in the sections cited; this is the checklist, not a re-derivation.
+
+  • Every lexically-present field is filled. For each entity tag built, every field the Clause triggers carries its value from the Entity Registry — or MISSING where the Registry supplies none (7.2). No field that is not lexically triggered is filled.
+
+  • The Mention Deduplication Rule is applied (6.1.2). Minimal entity tags whose entity is already carried in another tag's field are suppressed; everything the rule does not suppress is emitted.
+
+  • Every non-deduped co-referenced tag is emitted (6.6).
+
+  • Every inherited Event, Attribute, and Quantified Statement tag is reproduced unchanged, and every lexically-triggered R: and TE: tag from the Entity Registry is emitted (neither is ever suppressed). 
+
+  • Tags are ordered per Part V.
+
+7.2 MISSING
+If, in assembling an Entity Registry tag, the Assembler finds that a necessary, lexically-present field in a Person, Social Identity, Location, or Named Vessel tag has no Entity Registry entry, the Assembler inserts "MISSING" in place of the absent field value and add a Tagger Note: "ER gap: [field]: [surface word/phrase]." (See PART VIII for Tagger Notes.)
+  • MISSING is only ever used to indicate a missing Entity Registry field value in a tag the Assembler builds — never the absence of a whole tag.
+ 
+══════════════════════════════════════════════════════
+
+PART VIII: TAGGER NOTES FORMAT
+
+Place the Tagger Notes block at the end of the Clause tag set, after all tags have been written.
+  • Introduce it with the line: TAGGER NOTES
+  • Write each note as a brief bullet point or short sentence.
+  • Reference the relevant ClauseID, entity Headword, tag type, or trigger phrase where helpful.
+
+Use the Tagger Notes only to explain problems, disambiguation, or uncertainties.
+
+Unless there is a problem or uncertainty, NEVER use Tagger Notes to
+* paraphrase Clause text,
+* explain unproblematic assembly decisions,
+* explain routine co-reference resolutions,
+* explain that a minimal Entity tag was suppressed by the Mention Deduplication Rule,
+* explain that fields are omitted because they are not lexically triggered by the Clause,
+* explain why a tag is correct, or
+* restate information already captured in tags.
+
+Do not explain why a tag was or was not included if the output already reflects the correct result.
+
+Err on the side of silence.
+
+══════════════════════════════════════════════════════
+
+PART IX: EXAMPLE CLAUSE BLOCK STRUCTURE
+
+All tags are emitted in the Part V order, with each Entity's Relationship (R:) and Attribute (A:) tags beneath it and indented if the described Entity is present. The schematic structure of a Clause block with two Events:
+
+ClauseID 001
+<original clause text>
+
+E: <Event 1 tag>
+E: <Event 2 tag>
+P: <surviving Person tag>
+   R: <Relationship tag related to the Person>
+   A: <Attribute tag related to the Person>
+SI: <surviving Social Identity tag>
+   R: <Relationship tag related to the Social Identity>
+L: <surviving Location tag>
+   R: <Relationship tag related to the unnamed, generic Location>   
+   A: <Attribute tag related to the Location>
+I: <surviving Institution tag>
+   R: <Relationship tag related to the Institution>   
+   A: <Attribute tag related to the Institution>
+T: <surviving Thing tag>
+   R: <Relationship tag related to the Thing>   
+   A: <Attribute tag related to the Thing>
+INT: <surviving Intangible tag>
+   R: <Relationship tag related to the Intangible>   
+   A: <Attribute tag related to the Intangible>
+V: <surviving Vessel tag>
+   R: <Relationship tag related to the named Vessel>   
+   A: <Attribute tag related to the named Vessel>
+Q: <Quantified Statement tag>
+TE: <Temporal Expression tag>
+
+Worked example. The Clause below is fabricated for this instruction and is not drawn from any source. Assume a document dated in 1601, so "fortie yeres" imputes a birth year of about 1561.
+
+ClauseID 0XX
+And the said John Smith, beyng of the age of fortie yeres, did at Michaelmas last delyver the wares unto Thomas Rolfe, nephewe to the said Smith, at the warehouse in Bristoll.
+
+E: Deliver [E-0111] | Trigger: delyver | Actor: John Smith [P-0501] | Counterparty: Thomas Rolfe [P-0302] | Object: merchandise [T-0101] | PlaceWhere: warehouse [L-0601] | PlaceWhere: Bristol [L-0012] | When: Michaelmas 1600
+P: John Smith [P-0501] | Trigger: John Smith; Smith | Sex: male | ImputedBirthYear: 1561
+   R: Nephew [R-0211] | Trigger: nephewe | Subject: Thomas Rolfe [P-0302] | Object: John Smith [P-0501] | Inverse: yes
+R: located in [R-0402] | Trigger: in | Subject: warehouse [L-0601] | Object: Bristol [L-0012]
+TE: Michaelmas [TE-0001] | Trigger: Michaelmas
+
+How the Mention Deduplication Rule (6.1.2) produced this set:
+  • Suppressed: Thomas Rolfe (minimal; carried by the E: tag's Counterparty:), wares = headword: "merchandise" (minimal; E: Object:), Bristol (minimal; E: PlaceWhere:), and warehouse (minimal; E: PlaceWhere:). Each is a minimal Entity tag whose entity already appears in the E: tag.
+  • Emitted: John Smith (carries ImputedBirthYear: so not minimal and receives all available tags); both R: tags (relationships are never minimal); Michaelmas (a TE: tag, never subject to the rule).
+
+The nephew R: tag is indented under John Smith because the P: tag is present. The located-in R: tag for Bristol is not indented because the L: tag is suppressed.

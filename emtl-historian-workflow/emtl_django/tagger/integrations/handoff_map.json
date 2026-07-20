@@ -1,0 +1,143 @@
+{
+  "schema_version": "emtl-integration-handoff-map-v1",
+  "provider_boundary": {
+    "selection_environment_variable": "EMTL_STAGE_PROVIDER",
+    "single_factory": "tagger/services/providers/factory.py:stage_generation_client",
+    "current_adapter": "tagger/services/providers/gpu_local.py:GpuLocalProviderClient",
+    "target_async_protocol": "tagger/integrations/contracts.py:AsyncChatbotProvider",
+    "supported_selection_before_cloud_install": ["gpu_local"],
+    "reserved_cloud_selections": ["aws_bedrock", "external_api"],
+    "generation_consumers": [
+      "tagger/services/stage_runner.py",
+      "tagger/services/entity_generation.py",
+      "tagger/services/eventcut_extraction.py",
+      "tagger/services/live_workflow.py",
+      "tagger/services/occurrence_generation.py",
+      "tagger/services/summary_assembler_generation.py"
+    ],
+    "entity_special_capability": {
+      "current": "The local Entity runner requires provider health, tokenize-only, and readiness evidence before generation.",
+      "cloud_rule": "The AWS adapter must enforce equivalent prompt completeness and model execution policy server-side; it does not need to reproduce GPU memory diagnostics.",
+      "factory_entry": "tagger/services/providers/factory.py:local_controlled_generation_client"
+    }
+  },
+  "data_layers": [
+    {
+      "name": "raw_output",
+      "meaning": "Exact provider text retained for display, audit, and correction.",
+      "may_flow_downstream": false
+    },
+    {
+      "name": "parsed_output",
+      "meaning": "Deterministically parsed structure plus validation evidence.",
+      "may_flow_downstream": false
+    },
+    {
+      "name": "reviewed_output",
+      "meaning": "Human accept, edit, reject, or proposal decisions applied to parsed records.",
+      "may_flow_downstream": false
+    },
+    {
+      "name": "approved_downstream_package",
+      "meaning": "Versioned package emitted only after the stage-specific approval gate.",
+      "may_flow_downstream": true
+    }
+  ],
+  "review_migration": [
+    {
+      "review": "stage text edit",
+      "current_ui_action": "save_stage_text",
+      "service": "tagger/services/live_workflow.py",
+      "current_storage": "StageOutput.raw_output, payload, provenance, status",
+      "recommended_api": "PATCH /v1/workflow-runs/{run_id}/stages/{stage_id}",
+      "recommended_database": "emtl_stage_run plus emtl_review_decision",
+      "concurrency": "Require the current stage revision; return HTTP 409 on mismatch."
+    },
+    {
+      "review": "Entity row accept/edit/reject",
+      "current_ui_action": "entity_decision",
+      "service": "tagger/services/live_workflow.py:save_entity_review_decision",
+      "current_storage": "StageOutput.payload.live_entity_decisions",
+      "recommended_api": "POST /v1/workflow-runs/{run_id}/entity-decisions",
+      "recommended_database": "emtl_review_decision; accepted rows enter emtl_entity_record only after finalization",
+      "concurrency": "Require stage revision and a stable review_row_id."
+    },
+    {
+      "review": "Entity user proposal",
+      "current_ui_action": "propose_entity",
+      "service": "tagger/services/entity_review_handoff.py:propose_entity",
+      "current_storage": "NewIdProposal",
+      "recommended_api": "POST /v1/workflow-runs/{run_id}/entity-proposals",
+      "recommended_database": "emtl_review_decision followed by emtl_entity_record when approved",
+      "concurrency": "Generate the provisional ID server-side and make the request idempotent."
+    },
+    {
+      "review": "Event headword accept/edit/reject/proposal",
+      "current_ui_action": "headword_action",
+      "service": "tagger/services/event_headword_review.py:apply_review_action",
+      "current_storage": "StageOutput.payload.headword_review_store",
+      "recommended_api": "POST /v1/workflow-runs/{run_id}/event-cuts/{event_cut_id}/decisions",
+      "recommended_database": "emtl_event_candidate, emtl_review_decision, emtl_event_assignment",
+      "concurrency": "Require item revision; preserve audit_log actions as append-only review decisions."
+    },
+    {
+      "review": "stage approval",
+      "current_ui_action": "accept_stage or finalize_entity",
+      "service": "tagger/services/live_workflow.py:accept_stage",
+      "current_storage": "StageOutput.status and approval provenance",
+      "recommended_api": "POST /v1/workflow-runs/{run_id}/stages/{stage_id}/approve",
+      "recommended_database": "emtl_stage_run and emtl_review_decision in one transaction",
+      "concurrency": "Approval must reference the exact reviewed stage revision."
+    }
+  ],
+  "downstream_packages": [
+    {
+      "contract": "clause-parser-header-body-v1",
+      "producer": "tagger/services/stage_validation.py",
+      "approval_gate": "Accepted Clause Parser StageOutput with exact source coverage",
+      "consumers": ["Entity Registry", "Event Extraction", "Occurrence Registry"]
+    },
+    {
+      "contract": "entity-reviewed-downstream-v1",
+      "producer": "tagger/services/entity_review_handoff.py:build_entity_downstream_package",
+      "approval_gate": "Every Entity row reviewed and Entity stage finalized",
+      "consumers": ["Occurrence Registry", "Assembler"]
+    },
+    {
+      "contract": "eventcut-downstream-v1",
+      "producer": "tagger/services/eventcut_extraction.py:build_downstream_package",
+      "approval_gate": "Validated EventCuts tied to accepted clauses",
+      "consumers": ["dense Event candidate lookup"]
+    },
+    {
+      "contract": "event-assignment-downstream-v1",
+      "producer": "tagger/services/event_occurrence_workflow.py:load_accepted_event_assignments",
+      "approval_gate": "One final human headword assignment for every EventCut",
+      "consumers": ["Occurrence Registry"]
+    },
+    {
+      "contract": "occurrence-clause-eaq-v1",
+      "producer": "tagger/services/occurrence_generation.py:OccurrenceGenerationService",
+      "approval_gate": "Validated E/A/Q output accepted by the reviewer",
+      "consumers": ["Assembler", "workflow export"]
+    },
+    {
+      "contract": "event-occurrence-merged-review-v1",
+      "producer": "tagger/services/event_occurrence_workflow.py:build_merged_event_occurrence_package",
+      "approval_gate": "Event assignments remain authoritative while Occurrence enrichment is reviewed",
+      "consumers": ["clause-level review UI", "workflow export"]
+    },
+    {
+      "contract": "tag-assembler-occurrence-conservation-v1",
+      "producer": "tagger/services/summary_assembler_generation.py:AssemblerGenerationService",
+      "approval_gate": "Every accepted E/A/Q line is preserved exactly and in order",
+      "consumers": ["workflow export"]
+    },
+    {
+      "contract": "emtl-handoff-contract-v1",
+      "producer": "tagger/services/export_contract.py:build_workflow_export",
+      "approval_gate": "Accepted data separated from audit data and integrity hashes valid",
+      "consumers": ["WorkflowRepository", "PostgreSQL ingestion", "S3 export artifact"]
+    }
+  ]
+}

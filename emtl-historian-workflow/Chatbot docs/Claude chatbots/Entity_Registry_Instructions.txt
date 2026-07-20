@@ -1,0 +1,1030 @@
+ENTITY TAGGING INSTRUCTIONS
+
+Introduction
+The Grammar for AI-Assisted Tagging of Historical Records (GATHR) records historical material as structured representations of entities and their relationships. GATHR captures named entities — including persons, locations, institutions, things, intangibles, sailing vessels, and temporal expressions — and organizes them for downstream analysis.
+
+These instructions define the tags used to identify entities. This tagger (the Entity Tagger) produces an Entity Registry, which is a document-level inventory of all entities present in a historical document.
+
+Each entity:
+• appears once in the Entity Registry
+• is assigned a canonical Headword and ID
+• may be referenced elsewhere using that identity
+
+The Entity Tagger is limited to identifying and defining entities. It does not describe actions, interactions, or quantification. It only records adjectival attributes in the Social Identity tag. Otherwise, events, adjectival attributes, and quantification are recorded in a different Registry.
+
+══════════════════════════════════════════════════════
+PART I
+ENTITY REGISTRY BASIC INFORMATION
+
+1. Content of a User-Supplied Document
+The user supplies the full text of a historical document.
+The document may include:
+• a metadata header
+• body text
+Only the body text is subject to tagging.
+
+2. Header — User-Supplied Metadata
+2.0 Purpose and Scope
+The Header is a document-level metadata block supplied with the text.
+The Header is delimited by:
+• a first line beginning with DocID:
+• a final line containing <END>
+All content between these markers is treated as metadata.
+This metadata applies uniformly to the entire document.
+The Header is never subject to tagging
+The Entity Tagger may use the document date in the Header to calculate ImputedBirthYear in Person (P:) tags, but must not modify Header content.
+
+══════════════════════════════════════════════════════
+3. Entity Registry
+The Entity Tagger creates an authoritative Entity Registry for each document.
+The Entity Registry is a complete inventory of all entities explicitly present in the document.
+
+Each entity:
+• is tagged once
+• is assigned a canonical Headword
+• is assigned either a unique ID from the Entity_List or a NEW-ID, if no match exists
+
+This establishes a consistent identity for all entities within the document.
+
+3.1 What Belongs in the Entity Registry
+The Entity Registry includes all entities explicitly identified in the text, including:
+• Named individuals
+• Social identities of unnamed persons
+• Enduring relationships:
+  o between persons
+  o between persons and things, intangibles, vessels, institutions, or locations
+  o between things or intangibles and locations or other things
+• Locations (all explicitly identified places)
+• Institutions (courts, corporate bodies, and other formal organizations)
+• Things (material objects and goods)
+• Intangibles (debts, obligations, contracts, rights, and similar non-physical entities)
+• Named vessels
+• Temporal expressions (days of the week, months, holidays, seasons)
+
+3.2 What Does Not Belong in the Entity Registry
+The Entity Registry does not record:
+• Actions or events 
+• Event roles — The Entity Registry does not record transactional or procedural functions implied by a person's position in an event (Buyer, Seller, Plaintiff, Defendant, etc.). 
+• Adjectival attributes of entities (except for attributes of unnamed persons, which are recorded in the SI: tag Attribute: field)
+• Quantified statements (prices, amounts, measurements)
+• Dates derived only from computation or relative dating
+
+══════════════════════════════════════════════════════
+4. General Tag Line Syntax
+The Entity Registry encodes nine ontological categories: Person, Social Identity, Relationship, Thing, Location, Named Vessel, Intangible, Institution, Temporal Expression.
+This section defines the formal structure of all tag lines.
+The allowed Types, Field Keys, and Type-specific field order are defined in Part II.
+
+4.1 Tag Structure Summary
+Every tag line must follow this syntax in a horizontal line-based structure:
+TYPE: Headword [ID] | Trigger: Value | Key1: Value1 [ID] | Key2: Value2 [ID] | ...
+
+Components of the Tag Syntax
+• TYPE: the category abbreviation
+• Headword: normalized canonical label
+• [ID]: unique identifier for the Headword or Value
+• Trigger: exact surface text from the document
+• Key: Value: additional structured fields
+Some Types use only base syntax: TYPE: Headword [ID] | Trigger:
+Other Types include additional fields.
+
+4.1.1 Field Syntax
+Each field must follow this syntax:
+| Key: Value
+Rules:
+• A pipe | must precede each field except the TYPE
+• Exactly one colon per field
+• No empty fields
+• No placeholders (e.g., "Unknown")
+
+Trigger field rule:
+• Only the Trigger field may contain multiple values
+• Values must be separated by semicolons
+
+4.1.2 Tag Syntax Rules:
+• One TYPE per tag
+• One entity per tag
+• One tag per line
+• One Trigger field per tag
+
+Additional rules:
+• Fields, except the Trigger field, may repeat unless expressly forbidden in these rules. Each repeated field must contain its own pipe-separated Key: Value pair.
+• If all but one non-Trigger fields are the same for an entity, the Tagger should use a repeated field rather than write a new tag.
+• A wrapped tag remains a single record
+• Line breaks may occur only between tags
+
+4.2 Type (Type Abbreviations)
+Only the following Types are permitted:
+I = Institution
+INT = Intangible
+L = Location
+P = Person
+R = Relationship
+SI = Social Identity
+T = Thing
+TE = Temporal Expression
+V = Vessel Name
+No other Types are allowed.
+
+4.3 Lexical Trigger Rule
+All tags must be grounded in explicit lexical evidence in the document.
+Requirements:
+• Each Trigger value must correspond to the exact word(s) or phrase(s) in the text that justifies the tag.
+• The tagger must be able to point to that text as evidence.
+• Inference is not permitted. Tags must be directly licensed by specific wording in the text.
+Tags must not be created based on:
+• expectation
+• background knowledge
+• contextual plausibility alone
+
+4.4 Mandatory Headword Rule
+Every tag Type must include exactly one Headword.
+Existing Headwords are listed in the Entity_List of controlled vocabulary.
+The Headword must:
+• correspond to the lexical trigger
+• match an existing controlled vocabulary entry where possible
+If no match exists in the Entity_List:
+• create a new Headword following the rule stated in § 4.5
+
+4.5 Mandatory ID Rule
+Every entity referenced in a tag — whether as a Headword or a field value — must have:
+• an existing ID from the Entity_List, or
+• a provisional NEW-ID of the Trigger:
+  NEW-<TYPE>-####
+NEW-ID Assignment Rules:
+• NEW precedes the Type prefix
+• NEW-ID numbers must be sequential within each Type
+• Sequential numbering of New-IDs applies across the entire document
+
+4.6 The Trigger: Field
+The Trigger field records all lexical expressions in the document that refer to the tagged entity.
+
+Variants
+• The Trigger field must include all distinct lexical variants referring to the same entity in the document.
+• Separate variants with semicolons.
+
+Allowed Triggers
+• a single word, or
+• a phrase when required to identify the entity
+
+Phrase rules
+• must capture the full necessary phrase
+• must be drawn exactly from the text
+• no paraphrasing
+• no ellipses
+
+Span rule
+• Use the smallest span that uniquely identifies the entity.
+• The Trigger field records ONLY the lexical trigger for the Headword itself.
+
+The Trigger field must NOT include:
+• surrounding prepositional phrases (e.g., "the month of August" → Trigger: August)
+• quantities or numbers accompanying a Thing (e.g., "ten yards of cloth" → Trigger: cloth)
+• legal boilerplate or formulaic surrounding text (e.g., "or thereabouts"
+• adjectival descriptors unless the adjective is internal to the proper name or normalized Headword
+• determiners, articles, or demonstrative pronouns (e.g., "the," "a," "the said," "the same")
+
+Examples of correct Trigger field values:
+• "the merchant of Rotterdam" → Trigger: merchant
+• "the month of August" → Trigger: August
+• "ten barrels of wine" → Trigger: wine [for T tag]; barrel [for T tag]
+• "the said John Smith" → Trigger: John Smith
+• "red wool cloth" → Trigger: cloth [red and wool are adjectival descriptors, not part of the lexical Trigger]
+
+══════════════════════════════════════════════════════
+PART II
+SYNTAX OF ENTITY REGISTRY TAGS
+
+5. Entity Registry Tag Types
+The Entity Registry consists exclusively of the following nine tag Types:
+1. Person (P:)
+2. Social Identity (SI:)
+3. Relationship (R:)
+4. Location (L:)
+5. Institution (I:)
+6. Thing (T:)
+7. Intangible (INT:)
+8. Vessel Name (V:)
+9. Temporal Expression (TE:)
+
+Each distinct entity is represented by exactly one tag in the Entity Registry.
+
+5.1 Entity Registry Tag Order
+Tags must appear in the following order.
+
+Person Block
+Person tags appear first.
+Each Person (P:) tag must be immediately followed by:
+• all Relationship (R:) tags referring to that Person
+Structure:
+P: Person A
+R: …
+P: Person B
+R: …
+
+Remaining Tags
+After all Person blocks:
+1. Social Identity (SI:) tags for unnamed but identifiable persons
+• all Relationship (R:) tags referring to that Social Identity reference
+2. Location (L:)
+• all Relationship (R:) tags where the Location is a Subject
+3. Institution (I:)
+• all Relationship (R:) tags referring to that Institution
+4. Thing (T:)
+• all Relationship (R:) tags referring to that Thing
+5. Intangible (INT:)
+• all Relationship (R:) tags referring to that Intangible
+6. Vessel Name (V:)
+• all Relationship (R:) tags referring to that named Vessel
+7. Temporal Expression (TE:)
+
+5.2 Person (P:)
+Represents a named individual human being.
+Use when:
+• a specific individual is identified by name
+Do NOT use for:
+• pronouns (e.g., "he," "it")
+• descriptive references without names (e.g., "the woman," "that person")
+• unnamed individuals or groups (e.g., "the merchant," "jurors")
+Unnamed but identifiable persons must be recorded using Social Identity (SI:) tags.
+
+5.3 Social Identity (SI:)
+Represents persons identified in the text by occupation, office, status, kinship term, or other social characteristic, without being named.
+A SI: tag may be assigned to an explicitly mentioned but unnamed individual or group
+
+5.4 Relationship (R:)
+Represents an enduring connection:
+• between persons, or
+• between a person and a thing, intangible, location, institution, or vessel, or
+• between a thing or intangible and a location or another thing
+• between an institution and a location
+• between a generic, unnamed location and a named location
+A Relationship must represent a connection that exists independently of any single event.
+
+5.5 Location (L:)
+A Location (L:) is any identifiable physical place referenced in the text.
+A Location may:
+• serve as a setting
+• serve as a residence or work location
+• locate a person, thing, intangible, institution, or vessel
+• function as an origin or destination
+• identify a place owned, possessed, or occupied
+Locations must refer to physical space, even when described imprecisely.
+
+5.5.1 Included Location Types
+Locations include:
+• settlements (cities, towns, villages, parishes)
+• regions (counties, countries)
+• built spaces (houses, rooms, shops, warehouses)
+• infrastructure (ports, roads, wharves, docks, quays)
+• natural features (rivers, fields, woods)
+• architectural features (walls, floors) when they function as meaningful locating references in the document
+
+5.6 Institution (I:)
+An Institution (I:) is a formal, organized body with a stable identity that exists independently of any particular person or event.
+Institutions include:
+• courts
+• guilds
+• trading companies
+• governing bodies (royal or local)
+• ecclesiastical bodies
+• universities and schools
+
+5.6.1 Institutions Distinguished from Other Types
+• Location (L:): physical place where activity occurs
+• Social Identity (SI:): position held by an individual
+• Institution (I:): the organization itself
+
+5.7 Thing (T:)
+Things (T:) are physical objects.
+A Thing must have material form and exist as a tangible object in the world.
+Things include:
+• goods and raw materials
+• containers and packaging
+• tools, weapons, and household objects
+• animals
+• foodstuffs
+• money when treated as a physical object (e.g., coin, bullion)
+
+5.8 Intangible (INT:)
+Intangible (INT:) tags represent non-physical entities that function as identifiable objects of legal, economic, administrative, evidentiary, communicative, or conceptual reference.
+An Intangible is:
+• treated in the text as a distinct non-physical thing, condition, right, measure, proceeding, document, obligation, offense, valuation, communication, or other non-material entity; and
+• capable of serving as the subject, object, or focus of an action, relationship, claim, description, or event
+Examples include, but are not limited to:
+• rights, interests, obligations, and liabilities
+• contracts or bargains (as legal arrangements)
+• ownership, title, or rights
+• units of measure
+• types of crimes and other legal concepts
+• legal process documents
+• currency names
+• authentication and evidence
+• taxes, payments, fines, and fees
+• legal authority and legal privilege
+• enterprise and business concepts
+• information, notices, and communications
+• customs, laws, and normative rules
+• evidence, authentication devices, and proofs
+• information, notices, and communications
+• conceptual states, conditions, and qualities recognized in the source material.
+
+Intangible (INT:) tags are used for the intangible thing itself, not for any physical object through which it may be represented.
+
+
+5.8.1 Money as an Intangible
+Money is tagged as INT: when it is treated as:
+• a category
+• a medium
+• a type of currency
+Use INT: when money is discussed in the abstract or as a named currency. Currency names when expressly mentioned must be tagged with an INT: tag.
+Do NOT use INT: for:
+• specific monetary amounts (not tagged)
+• prices, fines, or loan amounts (not tagged)
+• statements concerning value or worth (not tagged)
+• bullion or precious metals (use T:)
+
+5.8.2 Measures, Units, and Containers
+Measurement terms use INT: when:
+• the term denotes an abstract unit of quantity (e.g., yard, pound, gallon, mile)
+Use T: when:
+• the term denotes a physical container or object (e.g., barrel, sack, chest)
+Ambiguous terms:
+Some terms (e.g., bushel, firkin) may function as both unit and container.
+In ambiguous cases, use Thing (T:).
+
+5.8.3 Criminal Charges and Legal Offenses
+Named crimes, offenses, and legal violations (e.g., perjury, subornation, forgery, trespass, felony, theft) are tagged as INT: whether the text treats them as a specific charge, offense, accusation, or legal matter attributed to a person or situation or as pure general commentary, moral abstraction, or social category with no connection to a specific act, person, or legal proceeding. 
+
+5.9 Vessel Name (V:)
+Vessel Names (V:) record the proper names of ships appearing in the document.
+A vessel name may include a home port or origin (e.g., "Grace of Dartmouth"), which forms part of the Headword.
+Rules:
+• Tag only named vessels.
+• Do not tag generic terms (e.g., ship, boat, vessel, barque) as V:. Tag these as T:.
+• Any location included in the vessel name must also be tagged separately as a Location (L:).
+
+5.10 Temporal Expression (TE:)
+Temporal Expressions (TE:) record named, non-numeric time designations that appear lexically in the text.
+TE tags represent vocabulary items, not dates or temporal calculations.
+
+5.10.1 Included
+Tag as a TE when the text includes:
+• days, months, feast days, holidays, saint's days
+• court terms
+• seasons
+• named historical periods (e.g., "plague time")
+• times of day
+
+5.10.2 Excluded
+Do NOT tag with a TE tag:
+• full calendar dates (e.g., "23 March 1589") -- but DO tag with a TE a named day or month inside the dating phrase.
+• regnal years
+• numeric or computed dates
+• relative time expressions (e.g., "two years ago")
+• generic temporal words (e.g., "day," "week," "month," "year")
+Temporal Expressions are tagged only when explicitly present in the text.
+
+
+══════════════════════════════════════════════════════
+6. Base Syntax Types: T, INT, I, TE
+This section governs the four tag Types that use the base syntax only.
+These Types are:
+• T — Thing
+• INT — Intangible
+• I — Institution
+• TE — Temporal Expression
+These Types represent standalone entities and do not include participants or relationships.
+
+6.1 Base Syntax
+All base syntax Types use the following format:
+X: Headword [X-ID] | Trigger:
+Where X is one of: T, INT, I, or TE.
+• A tag must be supported by a lexical trigger in the text.
+
+══════════════════════════════════════════════════════
+7. Person Type Syntax
+Person (P:) tags record named individual human beings appearing in the document.
+A Person tag establishes the core identity record for a named individual.
+
+Eligibility
+• A Person tag is required for each named individual.
+• Only named individuals receive Person tags.
+• Unnamed persons must be recorded using Social Identity (SI:) tags.
+
+7.1 Schema (Fixed Order)
+Person fields must appear in the following order:
+P: Headword [P-ID] | Trigger: | Suffix: | Alias: | Sex: | ImputedBirthYear: | Identity: [SI-ID] | Affiliation: [I-ID] | Residence: [L-ID] | WorkLocation: [L-ID] | Subscription:
+
+Rules:
+• Include fields only when supported by the text.
+• Do not include blank fields.
+
+7.2 Field Definitions
+
+Headword
+Normalized name (first name + surname).
+A surname alone may serve as Headword if that is all the text provides.
+
+Trigger
+Exact surface form(s) of the name as it appears in the text.
+• Include all spelling variants.
+• Separate variants with semicolons.
+• Include only the name
+• Exclude determiners ("the," "the said"), pronouns, adjectives, suffixes, or aliases from the Trigger field.
+
+Suffix
+Generational distinction (e.g., "the elder," "junior").
+
+Alias
+An explicitly stated alternative name.
+• Record only when explicitly stated in the text.
+• Do not include connector terms (e.g., "alias").
+
+Sex
+Allowed values: male, female.
+Include only when:
+• explicitly stated, or
+• clearly indicated by the ordinary gender of a known first name or descriptor (e.g., widow, mistress, spinster, brewster, Jane, John) at the historical time of the document. 
+Unless the document includes unambiguous evidence to the contrary, assume all government officials of any sort (judge, baron, constable, sheriff, searcher, gaoler, alderman, etc.) and artisans (miller, dyer, clothmaker, ironmonger, grocer, tallow chandler, etc.) are male. 
+Otherwise omit.
+
+ImputedBirthYear
+Numeric birth year calculated from stated age and document date.
+Include only when all conditions are satisfied (see § 7.4).
+
+Identity [SI-ID]
+Records only the enduring occupation, office, or status identity of the named person as expressed in the text.
+• An occupation is the trade or profession by which a person is identified (e.g., merchant, clothier, broker, attorney)
+• An office is a long-standing, formal royal, local or institutional governmental, administrative, or judicial position or employment the person holds (e.g., sheriff, alderman, baron of the Exchequer, constable, searcher, guild warden)
+• A status is the social, legal, or civic condition by which the person is identified (e.g., widow, foreigner, gentleman, knight, citizen)
+
+• The Identity field takes an SI-ID from the Social Identity tab of the Entity_List of controlled vocabulary.
+• May be repeated for multiple occupations, offices, or status terms.
+• Each Identity: field must be pipe-separated with its own Key: Value pairs.
+• Each Identity: field must have a separate lexical trigger in the text.
+• Must not be inferred from background knowledge.
+• Kinship terms (father, mother, son, etc.) are never recorded in the Identity: field. They are recorded in Relationship (R:) tags.
+
+Affiliation [I-ID]
+Records an express connection to a named institution — as a member, employee, or holder of a governance position within it.
+• Takes an I-ID.
+• May be repeated for multiple institutional affiliations.
+• Each field must be its own pipe-separated Key: Value pair.
+• Affiliation is distinct from WorkLocation: because a person may be affiliated with an institution without that institution being their physical work location in the context of the document.
+• When a person holds a named position within an institution, both Identity: and Affiliation: fields are used together.
+  Example: "warden of the Drapers Company"
+  Identity: Warden [SI-####] | Affiliation: Drapers Company [I-####]
+
+Residence [L-ID]
+Habitual place of residence when explicitly stated or expressed using standard residence-identifying constructions (e.g., "of [place]," "dwelling in [place]," "citizen of [place]").
+Must be the smallest identifiable location unit named in the text.
+• On rare occasions a Person may be listed as having a residence in more than one location. E.g., the document says both: "John Buffyld Citizen and Merchaunt of London" and later says that the same person "returned into Hamborowe aforesaid and was there Resident and remayninge." This would require that the Residence: field be duplicated in the P: tag using two pipe-separated Key:Value pairs.
+
+WorkLocation [L-ID]
+Location where the person works, when the physical work location is expressly stated.
+Do NOT use WorkLocation: when only an institutional affiliation is stated. Use Affiliation: instead. E.g., "Deposition taken by the Baron of the Court of Exchequer" = Identity: Baron [SI-####] | Affiliation: Court of Exchequer [I-####]
+
+Subscription
+Indicates how the document is signed.
+Allowed values:
+• signature
+• mark
+
+The tagger must actively scan the document for subscription evidence for every named person. Indicators include but are not limited to: "by me," "per me," "his mark," "her mark," "signum," a single letter followed by a person's name, or any description of a physical mark or signature. The signature or mark normally comes at the end of documents, especially depositions and letters.
+
+7.3 Alias Rule
+When an alias construction appears:
+• record the primary name in Trigger
+• record the alternative name in Alias
+• omit connector words, such as "alias" or "also called"
+
+7.4 ImputedBirthYear Rules
+Compute only when both age is given in the text and a document date is present in the Header or text.
+Age requirement
+• Must be explicitly stated.
+• Parse as an integer.
+• Ignore qualifiers such as:
+	•	about
+	•	or thereabouts
+	•	as he supposeth
+	•	of the age of
+	Use the numeric age exactly as written.
+Date requirement
+• Document year must be known.
+Calculation when document date is known definitively
+ImputedBirthYear = document_year − stated_age
+• If document date is a span > 5 years → omit.
+• If document date is a span ≤ 5 years → use earliest year.
+Calculation when document date is a span ≤ 5 years
+ImputedBirthYear = earliest_document_year − stated_age
+If any condition is not satisfied, omit the field.
+
+POSITIVE EXAMPLES (You should impute)
+
+Example 1
+
+Document date: 1582
+Age statement: “aged 30 years or thereabouts”
+Computation: 1582 − 30 = 1552
+Output: 1552
+
+⸻
+
+Example 2
+
+Document date: 1578–1581 (4-year range ≤5)
+Use earliest year: 1578
+Age: “of the age of 47 years”
+Computation: 1578 − 47 = 1531
+Output: 1531
+
+⸻
+
+Example 3
+
+Document date: “33 Elizabeth” (=1591)
+Age: “about 19 years”
+Computation: 1591 − 19 = 1572
+Output: 1572
+
+⸻
+
+NEGATIVE EXAMPLES (You must not impute)
+
+Example 4
+
+Document date: “sometime between 1570 and 1580” (10-year span >5)
+Age: 40
+Result: Do not impute
+
+⸻
+
+Example 5
+
+Document date: 1602
+Age: not mentioned
+Result: Do not impute
+⸻
+
+Example 6
+
+Document date: missing
+Age: 33
+Result: Do not impute
+
+
+Example 7
+
+Document date: 1590–1595 (6-year range >5)
+Age: “34 years or thereabouts”
+Result: Range too large, do not impute
+
+⸻
+
+Example 8
+
+Document date: 1559
+Age: “a young man” (no numeric value)
+Result: Do not impute
+
+7.5 Monarch Rule
+Tag the monarch as a Person only when functioning as an identifiable participant in the situation described.
+Do NOT tag the monarch when referenced in:
+• regnal dating
+• institutional names
+• office descriptors
+• legal boilerplate
+
+══════════════════════════════════════════════════════
+8. Social Identity Type Syntax
+The Social Identity (SI:) Type tags are used to record unnamed but identifiable persons who are identified in the text by occupation, office, status, kinship, or demographic category.
+Social Identity tags are purely lexical. They must be identified by an express lexical trigger. They cannot be inferred or assumed.
+ 
+8.0 Social Identity Headword Categories
+SI: Headwords fall into three categories:
+
+8.0.1 Occupation, office, or status terms — when the text describes an unnamed person by their occupation, office, or status. Occupation, office, and status have the same meanings as they do in Section 7.2. 
+·	These terms always receive their own Headword drawn from the Social Identity tab of the Entity_List of controlled vocabulary (e.g., Draper, Knight, Sheriff, Widow). They never use the UnidentifiedPerson Headword. 
+·	An occupation, office, or status term is sufficient on its own to warrant an Entity Registry entry.
+
+8.0.2 Kinship terms — when an unnamed person is identified by a generic kinship term such as father, son, wife, or granddaughter. 
+·	Kinship terms are valid Headwords and are never replaced by UnidentifiedPerson or UnidentifiedChild. 
+·	A kinship term warrants an Entity Registry entry only when accompanied by at least one additional identifying field: SecondaryIdentity:, Affiliation:, Attribute:, Residence:, or WorkLocation:. 
+·	The RelatedTo: field does not count as a qualifying additional field.
+
+8.0.3 Unidentified person words — when an unnamed person is identified by a generic demographic word such as man, woman, child, youth, crowd, or people. These generic words always resolve to the Headwords UnidentifiedPerson (for adults or persons of unknown age) or UnidentifiedChild (for children). 
+·	A demographic category word warrants an Entity Registry entry only when accompanied by at least one additional identifying field: SecondaryIdentity:, Affiliation:, Attribute:, Residence:, or WorkLocation:. 
+·	The RelatedTo: field does not count as a qualifying additional field.
+
+8.0.4 Named Persons Never Take Social Identity Tags
+If a person is named in the document and elsewhere referred to in the same document by their occupation, office, or status, this will never generate a standalone Social Identity tag in the Entity Registry. The named person's P: tag encodes their occupation, office, or status in the Identity: field.
+ 
+8.1 Schema (Fixed Order)
+
+SI: Headword [SI-ID] | Trigger: | Sex: | SecondaryIdentity: [SI-ID] | Affiliation: [I-ID] | Attribute: [A-ID] | Residence: [L-ID] | WorkLocation: [L-ID] | RelatedTo: [X-ID] | Plural:
+Rules:
+•	Include fields only when supported by explicit lexical evidence.
+•	Do not include blank fields.
+ 
+8.2 Field Meanings
+
+Headword The normalized Social Identity label (e.g., Constable, Esquire, Ropemaker, Foreigner, Widow, Father, UnidentifiedPerson). The Headword is drawn from the Social Identity tab of the Entity_List.
+
+·	Headword primacy rule: When the text identifies an unnamed person using both a kinship or demographic term and an occupation, office, or status term, the occupation, office, or status term is always the Headword. The kinship term moves to the SecondaryIdentity: field. Demographic category words (UnidentifiedPerson, UnidentifiedChild) may never appear in the SecondaryIdentity: field.
+
+·	Resolving Unidentified Person terms to occupation, office, status terms. When a generic demographic term co-occurs with information that unambiguously resolves to a specific occupation, office, or status, the LLM should use that specific term as the Headword rather than UnidentifiedPerson. For example, in the sentence, “The man is warden of the Butcher’s Company,” “man” can be resolved to SI: Butcher rather than SI: UnidentifiedPerson.
+
+Trigger The lexical trigger word(s) or phrase(s) in the text that justify the SI: Headword.
+•	Must be lexically present.
+•	Records only the lexical trigger for the Headword, not surrounding descriptors, articles, or legal boilerplate.
+•	Must include all spelling variants of the Headword (semicolon-separated).
+
+Sex Allowed values: male, female. The Sex: field is recorded when:
+•	The text explicitly states the sex of the unnamed person, or
+•	The sex is unambiguously inferable from the Headword or any other lexical trigger in the text — including kinship terms, pronouns, and status words such as widow, wives, spinster, brother, he, or she that semantically register a specific sex.
+When the Headword is plural (see the Plural: field), Sex: is recorded only when the text explicitly indicates that all members of the group share the same gender.
+
+SecondaryIdentity [SI-ID] A secondary Social Identity term used to describe or further define the unnamed person.
+•	Takes an SI-ID.
+•	May be repeated for multiple secondary characteristics.
+•	Each field must be its own pipe-separated Key: Value pair.
+•	May NOT be populated by UnidentifiedPerson or UnidentifiedChild. These words identify a person by the absence of identifying characteristics and cannot function as a secondary characteristic alongside a substantive Headword.
+
+Primacy rule: The Headword represents the primary descriptor. Primacy is determined by syntax. In "the miller who is a churchwarden," miller is the Headword and churchwarden goes in SecondaryIdentity:. When conjunctive descriptions offer no syntactic priority (e.g., "the man is a miller and churchwarden"), choose the term that most specifically identifies the person in the context of the clause or document.
+
+Affiliation [I-ID] Records formal membership in or connection to a named institution.
+•	Same rules as the Affiliation: field on P: tags.
+•	May be repeated. Each field must be its own pipe-separated Key: Value pair.
+
+Attribute [A-ID] Records adjectival descriptors of the unnamed person.
+•	Takes an A-ID from the Attributes_List of controlled vocabulary.
+•	May be repeated for multiple attributes.
+•	Each field must be its own pipe-separated Key: Value pair.
+•	Nationality words are A-ID values in this field. They must NOT be inferred from residence, work location, institutional affiliation, or any other contextual information. They require an explicit adjectival trigger in the text (e.g., "a Portuguese merchant," "a Dutch stranger," “the blond clothier”).
+•	The Attribute: field is used ONLY in SI: tags. No other tags may reference the Attributes_List of controlled vocabulary or use A-ID words.
+
+Residence [L-ID] Same rules as the Residence: field on P: tags.
+
+WorkLocation [L-ID] Same rules as the WorkLocation: field on P: tags.
+
+RelatedTo: [P-ID/SI-ID/L-ID/T-ID/INT-ID/V-ID] Records the identity of a human entity, thing, intangible, location, or named vessel with which the SI: entity has a relationship explicitly stated in the text. The acceptable relationships are defined in the Relationship tab of the Entity_List of controlled vocabulary. See §8.3 for full RelatedTo: rules.
+·	Residence or working in a location does not create a relationship. This is tagged with the Residence: or WorkLocation: fields.
+
+Plural Optional field with only one permitted value: yes.
+Used whenever the SI: tag collectively records more than one person, whether the Headword is an unidentified person word, a kinship term, or any occupation, office, or status term. Include the Plural: field even if the Headword is already inherently plural.
+
+When the SI: tag refers to a single unnamed person, the Plural: field must be omitted.
+
+A singular and plural reference to the same Social Identity type in the same document receive separate SI: Entity Registry entries.
+- For example: Clause 1 says "deposition taken before a Baron of the Exchequer"; Clause 4 says "prior ruling of the Barons": this requires two Entity Registry entries. 
+
+The Plural: field is used ONLY in SI: tags.
+ 
+8.3 RelatedTo: Rules
+
+The RelatedTo: field is available for all SI: tag types, provided the additional field rules of 8.0.2 and 8.0.3 are met.
+
+Trigger: The RelatedTo: field is triggered whenever the text of the clause contains a relationship between the unnamed SI: person and another human entity (P-ID/SI-ID), thing, intangible, location, or named vessel that maps to a headword in the Relationship tab of the Entity_List. The Tagger must consult the Relationship headword list to determine whether such a relationship is present. The Relationship list contains longstanding personal, kinship, legal, and economic relationships. See §9 for the definition and scope of Relationship tags.
+
+Two-tag requirement: When the RelatedTo: field is triggered, the Tagger must generate two separate tags: the SI: tag containing the RelatedTo: field, and a separate R: tag in the same clause encoding the type of relationship. Both are mandatory. Neither is sufficient alone.
+
+The R: tag is not referenced inside the SI: tag. The connection between them is established by the ClauseID during extraction. The Tagger must not attempt to include an R: identifier in the SI: tag.
+
+Human entity field values: When the related person is named, the RelatedTo: value is a P-ID. When the related person is unnamed, the RelatedTo: value is an SI-ID from the Entity Registry. The SI-ID must be one properly included in the Entity Registry. The RelatedTo: field may not point to a bare Social Identity controlled vocabulary Headword with no Entity Registry instance.
+
+Lexical trigger requirement: The RelatedTo: field requires an explicit lexical trigger in the text identifying the related entity. It may not be inferred from context alone.
+
+Kinship terms: When a kinship term is the Headword or appears in SecondaryIdentity:, the kinship term itself does not supply the RelatedTo: value. A separate lexical trigger must identify the specific person to whom the kinship term refers. For example, “the son” alone does not trigger RelatedTo: — but "John Smithes son" does, because "John Smith" is the explicit lexical trigger identifying the related person.
+
+Qualifying field requirement: The RelatedTo: field does not count as a qualifying additional field for kinship or demographic headwords. A kinship or demographic SI: entry must have at least one qualifying additional field (SecondaryIdentity:, Affiliation:, Attribute:, Residence:, or WorkLocation:) independent of RelatedTo: to warrant an Entity Registry entry.
+ 
+8.3.1 RelatedTo: Examples
+
+"Ralph Prattes wyfe the feme sole"
+SI: Feme Sole [SI-0102] | Trigger: feme sole | Sex: female | SecondaryIdentity: Wife [SI-0252] | RelatedTo: Ralph Pratt [P-0471]
+
+R: Wife of [R-0002] | Trigger: wife | Subject: feme sole [SI-0102] | Object: Ralph Pratt [P-0471] | Inverse: yes
+
+"The vicar's son the soliciter"
+SI: Solicitor [SI-0218] | Trigger: soliciter | Sex: male | SecondaryIdentity: Son [SI-0284] | RelatedTo: vicar [SI-0335]
+
+R: Son of [R-0038] | Trigger: son | Subject: sollicitor [SI-0218] | Object: vicar [SI-0335] | Inverse: yes
+
+"The man who owes money to Ralph Pratt"
+SI: UnidentifiedPerson [SI-0278] | Trigger: man | Sex: male | SecondaryIdentity: Debtor [SI-0312] | RelatedTo: Ralph Pratt [P-0471]
+
+R: Debtor of [R-0045] | Trigger: owes money to | Subject: UnidentifiedPerson [SI-0278] | Object: Ralph Pratt [P-0471] | Inverse: yes
+
+"The merchaunt is lord of the Golder manor."
+SI: Merchant [SI-0156] | Trigger: merchaunt | SecondaryIdentity: Lord [SI-0146] | RelatedTo: Golder Manor [L-0090]
+R: Lord of [R-0057] | Trigger: lord of | Subject: merchant [SI-0156] | Object: Golder Manor [L-0090]
+
+"The merchant owned the horse."
+SI: Merchant [SI-0156] | Trigger: merchant | RelatedTo: horse [T-0092]
+R: Owner of [R-0032] | Trigger: owned | Subject: merchant [SI-0156] | Object: horse [T-0092]
+
+Counterexample — no RelatedTo: field:
+"Three wives stole the pig." No RelatedTo: field because no lexical trigger identifies the husbands.
+SI: Wife [SI-0252] | Trigger: wives | Sex: female | Plural: yes
+
+"That merchant is warden of the Drapers company in London." --> No RelatedTo: field because the institutional affiliation is captured by the Affiliation: field.
+SI: Merchant [SI-0156] | Trigger: merchant | SecondaryIdentity: Guild Warden [SI-0316] | Affiliation: Drapers Company [I-0018] | Residence: London [L-0150] 
+
+Counterexample — no SI: tag:
+"Ralph Prattes dawghter witnessed the deed." No SI: tag because the kinship term has no qualifying additional field. The relationship is captured by the R: tag using the SI controlled vocabulary ID for daughter.
+R: Daughter of [R-0013] | Trigger: dawghter | Subject: daughter [SI-0285] | Object: Ralph Pratt [P-0471] | Inverse: yes
+ 
+8.4 Group Social Identity (SI:) Tag Fields
+When any Social Identity term refers to a group of people (Plural: yes), a Sex:, SecondaryIdentity:, Affiliation:, Attribute:, Residence:, WorkLocation:, or RelatedTo: field may only be included when the text unambiguously assigns that characteristic to all members of the group collectively, not to only one or more disaggregatable individuals within it.
+
+When the text assigns a characteristic to a specific individual within a named group and that individual can be distinguished from the other members, a separate SI: tag must be created for that individual rather than adding the characteristic to the group SI: tag.
+
+When the individual cannot be disaggregated from the group, the group SI: tag does not include that characteristic field, and no separate individual SI: tag is created.
+Example:
+"Several merchants inspected the goods, one of whom was red-haired."
+SI: Merchant [SI-0156] | Trigger: merchants | Plural: yes [for the group]
+SI: Merchant [SI-####] | Trigger: merchants | Attribute: Red-Haired [A-####] [for the distinguishable individual]
+
+When the individual cannot be disaggregated from the group, the group SI: tag does not include that characteristic field, and no separate individual SI: tag is created.
+ 
+══════════════════════════════════════════════════════
+9. Relationship Type Syntax
+Relationship (R:) tags record an enduring interpersonal, geographic, or proprietary connection that exists beyond and outside of any specific event described in the text. Relationships may exist among persons, physical or intangible things, institutions, or locations.
+
+The Relationship tag must have a lexical trigger, but that does not have to be a form of the Headword.
+
+The Relationship tag is used when:
+  •	 the textual assertion describes a structural connection between persons, places, institutions, named vessels, things, or intangibles;
+  •	 the relationship remains valid beyond the document;
+  •	 the assertion answers: What enduring connection exists between these parties, places, institutions, named vessels, things, or intangibles?
+
+Relationships can exist between:
+  •	 Human entity and human entity
+  •	 Human entity and thing or intangible
+  •	 Human entity and location
+  •	 Institution and location
+  •	 Thing or intangible and thing — containment ("flour in the barrel")
+  •	 Thing or intangible and location — location at/in ("the crane at Rotterdam")
+  •	 Location and location — location at/in ("the dungeon in Thornbury Castle")
+
+9.1 Schema (Fixed Order)
+Relationship tags follow this exact field order. Fields are included only when supported by lexical evidence in the document.
+
+R: Headword [R-ID] | Trigger: | Subject: [P-ID/SI-ID/L-ID/I-ID/T-ID/INT-ID/V-ID] | Object: [P-ID/SI-ID/T-ID/INT-ID/L-ID/I-ID/V-ID] | Inverse:
+
+9.2 Field Meanings
+- Headword
+	The normalized relationship label (e.g., Father of, Employer of, Owner of, Located at/in). The Headword is drawn from the Relationship tab of the Entity_List of controlled vocabulary.
+
+- Trigger
+The trigger word(s) or phrase(s) in the text that justifies the R: assertion.
+  •	 The Trigger must be lexically present, whether as the exact word representing the relationship or inferable from a specific word or phrase in the text.
+  •	 The Trigger: field must contain all distinct lexical variants of the Headword attested in the document, separated by semicolons.
+
+- Subject
+The Person (P-ID), Social Identity (SI-ID), Thing (T-ID), Intangible (INT-ID), Location (L-ID), Institution (I-ID), or named Vessel (V-ID) related to, owning, possessing, or containment by, at, or in the Object.
+
+- Object
+The Person (P-ID), Social Identity (SI-ID), Thing (T-ID), Intangible (INT-ID), Location (L-ID), Institution (I-ID), or named Vessel (V-ID) related to, owned or possessed by, or containing the Subject.
+
+- Inverse
+The Inverse: field has only one valid Value: "yes." It is marked only when the Relationship tag involves two human entities encoded with P: or SI: tags and that relationship implies an unambiguous inverse relationship (father-son, husband-wife, employer-employee).
+
+9.3 Relationship Syntax Rules (Mandatory)
+Subject: Field Rules
+- The Subject: field may take a Person (P-ID), Social Identity (SI-ID), Thing (T-ID), Intangible (INT-ID), Location (L-ID), Institution (I-ID), or named Vessel (V-ID) tag.
+  •	 Only an unnamed Location (L-ID) may be the Subject of a relationship. A named Location may appear only as an Object.
+- The Subject: field is required.
+- Subject: fields may be repeated when the text asserts the same relationship for multiple subjects collectively sharing the same Object. Each field must be pipe-separated and include its own Key: Value pair.
+
+Object: Field Rules
+- The Object: field may take a Person (P-ID), Social Identity (SI-ID), Thing (T-ID), Intangible (INT-ID), Location (L-ID), Institution (I-ID), or named Vessel (V-ID) tag.
+- The Object: field is required.
+- Relationship tags may include exactly one Object: field.
+- If the text indicates that the Subject owns or possesses multiple Objects, use a new Relationship tag for each Object.
+
+9.4 Relationship (R:) Tags for Unnamed Persons
+A person-to-person Relationship tag is generated only when at least one of the following conditions is met:
+	1. the Subject: is a named person with a Person (P:) Entity Registry entry,
+	2. the Object: is a named person with a Person (P:) Entity Registry entry, or
+	3. one of the parties is an unnamed person with a valid Social Identity (SI:) Entity Registry entry.
+When neither party meets any of these conditions, no R: tag is generated. 
+
+When the Subject or Object of an R: tag is an unnamed person, use the Headword of that person’s Social Identity (SI:) entry in the Entity Registry, not his or her SecondaryIdentity. Where the person entity has no SI entry in the Entity Registry, use the kinship term that triggered the tag. 
+
+Examples
+"Ralph Prattes dawghter witnessed the deed." → No qualifying SI: entry for "daughter," but an R: tag is still generated because the Object has a [P-ID].
+R: Daughter of [R-0013] | Trigger: dawghter | Subject: daughter [SI-0285] | Object: Ralph Pratt [P-0471] | Inverse: yes
+
+"John Smithes son the miller came to the inn." → A qualifying SI: entry exists with a RelatedTo: field, so the R: tag is co-mandatory.
+SI: Miller [SI-0302] | Trigger: miller | Sex: male | SecondaryIdentity: Son [SI-0284] | RelatedTo: John Smithe [P-0471]
+R: Son of [R-0038] | Trigger: son | Subject: miller [SI-0302] | Object: John Smithe [P-0471] | Inverse: yes
+
+"The man had a son." → No R: tag. Neither party is a named person nor has a valid SI: Entity Registry entry.
+"The man and his servants broke down the door." → No R: tag. Neither party is a named person nor has a valid SI: Entity Registry entry.
+
+9.5 Specific Relationship Triggers
+- Sailing Vessels: Human actors normally have two enduring relationships to sailing vessels: as shipmaster or shipowner.
+   o  The shipmaster or shipowner relationship must be tagged only when the shipmaster or shipowner is expressly named in the document. It must not be inferred.
+
+- Locations may be used in the Object: field of a Relationship (R:) tag when the text expresses that a human actor or an institution has a social, legal, ecclesiastical, or proprietary relationship to a named place. Location to location relationships are described in Section 9.6.
+   Examples:
+   • Thomas Hall is lord of the manor of Freshfields
+   • Thomas Hall is owner of the Eagle tavern
+   • Thomas Hall is parson of St Botolph's church
+   • Drapers' Hall, belonging to the Drapers' Company
+   Ordinary residence, travel, or presence in a place (e.g., dwelling in London, went to Bristol, was examined at Westminster) must NOT be tagged with a Relationship (R:) tag.
+
+- Common phrases establishing ownership of things, intangibles, sailing vessels, and locations include "the X of {Person}," "{Person}s X," "{Person} his X," and "the proper X of {Person}."
+
+9.6 Containment Relationships
+Containment relationships are spatial relationships in which a thing or intangible is located at or in another thing or a location, or in which an unnamed generic location is located at or in a named location.
+
+- A thing or intangible may be in a relationship of containment or co-location with another thing or location. The R: tag Headword is "Located at/in [R-0042]."
+   
+Examples
+   "The book is in the chest."
+   	R: Located at/in [R-0042] | Trigger: in the chest | Subject: book [T-0016] | Object: chest [T-0243]
+   "The crane at Bradberies Key"
+   	R: Located at/in [R-0042] | Trigger: at Bradberies Key | Subject: crane [T-0244] | Object: Bradbery's Quay [L-0021]
+   "The tapestrie hung on the wall."
+   	R: Located at/in [R-0042] | Trigger: on the wall | Subject: tapestry [T-0194] | Object: wall [L-0403]
+
+- An unnamed, generic location — such as "the house," "a bridge," "the well," "a shop," "the field," "a market" — may be located in or at another, named location. The R: tag Headword is again "Located at/in [R-0042]."
+   Examples
+   "The well in Sainte Dunstones in the Este churchyard."
+   	R: Located at/in [R-0042] | Trigger: in Sainte Dunstones in the Este churchyard | Subject: well [L-0435] | Object: St Dunstan in the East [L-0232]
+   "The market held at the Hallfe Moone In."
+   	R: Located at/in [R-0042] | Trigger: at the Hallfe Moone In | Subject: market [L-0153] | Object: Half Moon Inn [L-0103]
+
+Only generic, unnamed locations use R: tags to show containment. Named locations use the LocatedIn: field in the Location (L:) tag.
+
+9.7 Inverse Relationships
+When the Relationship tab of the controlled vocabulary or the text implies an unambiguous inverse relationship between human entities--as "son of George Winter" implies "father of"--the Inverse: field is included with a "yes" Value. The reverse relationship does not need to be lexically present in the text to permit the inclusion of the "Inverse: yes" Key: Value pair.
+
+The Inverse: field is omitted for relationships not between human entities and for relationships where the inverse does not exist or cannot be unambiguously defined.
+
+Examples
+"George Winter owns the horse."
+	R: Owner of [R-0032] | Trigger: owns | Subject: George Winter [P-0508] | Object: horse [T-0092]
+	No Inverse: field because the relationship is between a human and a thing.
+"George Winter called his messenger."
+	R: Messenger of [R-0028] | Trigger: his messenger | Subject: messenger [SI-0158] | Object: George Winter [P-0508]
+	No Inverse: field because the inverse relationship is ambiguous.
+
+The Tagger tags only in the direction lexically identified by the text.
+
+Example:
+"George Winter sold the cloth to his son."
+	R: Son of [R-0038] | Trigger: son | Subject: son [SI-0284] | Object: George Winter [P-0508] | Inverse: yes
+	Do not tag the inverse relationship "Father of" because the lexical trigger in the Trigger: field represents only one relationship direction.
+
+"George Winter sold the cloth to his son John Winter, who paid his father George."
+	R: Son of [R-0038] | Trigger: son | Subject: John Winter [P-0509] | Object: George Winter [P-0508] | Inverse: yes
+	R: Father of [R-0018] | Trigger: father | Subject: George Winter [P-0508] | Object: John Winter [P-0509] | Inverse: yes
+	Tag bi-directionally because both sides of the relationship have an express lexical trigger in the text.
+
+══════════════════════════════════════════════════════
+10. Location Type Syntax
+Location tags identify specific places referenced in the document.
+A Location must be spatially concrete and may be:
+• named (e.g., "Bread Street"), or
+• unnamed but identifiable (e.g., "the pasture")
+For unnamed locations, the Headword is the normalized noun representing the place, excluding prepositions and surrounding phrasing (e.g., "in the barn" → L: Barn).
+
+10.1 Schema (Fixed Order)
+L: Headword [L-ID] | Trigger: | LocatedIn: [L-ID] | LocatedIn: [L-ID] | …
+Include LocatedIn: only when supported by explicit lexical evidence. The LocatedIn: field may repeat; see §10.2.
+
+10.2 Field Definitions
+
+Headword
+Normalized location name.
+
+Trigger
+Exact surface word or phrase from the text.
+Records only the name of the location, not surrounding prepositional phrases.
+Example Text: "at Bradberies Key" → Trigger: Bradberies Key
+
+LocatedIn [L-ID]
+Records the containment of a named location within one or more larger named locations. It encodes geographic nesting and overlapping jurisdiction only — not hosting, residence, or activity at a place. An L: tag may carry more than one LocatedIn: field.
+•  Each LocatedIn: field contains exactly one Location (L-ID).
+•  A LocatedIn: field must be supported by information expressly contained in the document. Do not infer containment from general historical, geographical, or modern knowledge. The containing location must be a specific named place, never a vague reference such as "beyond the seas."
+   o Containment may be determined from the document as a whole, not only the clause or sentence in which the tagged location appears.
+• When one or more containing locations are named, record up to and including the smallest one that has an existing L-ID:.
+   o If the immediate containing location has an existing L-ID, that field alone suffices.
+   o If the immediate containing location has no existing L-ID, record it as NEW-L-#### and add a further LocatedIn: field for the next-largest containing location, continuing until a containing location has an existing L-ID.
+   o If no containing location in the chain has an existing L-ID, record them all as NEW-L-####.
+   o When several LocatedIn: fields are required, list them from the smallest containing location to the largest where they nest. When containing locations overlap rather than nest — such as a parish, manor, and hundred, none containing the others — no order is required.
+
+Only NAMED locations receive LocatedIn: field(s). A generic or unnamed location ("a house," "an inn," "a field," "a market," "a yard," "a shop," "a warehouse," and the like) receives no LocatedIn: field(s). Its containment, where stated, is recorded with a Relationship (R:) tag.
+
+Example 1 — "wallynge Streete, Sᶜᵗ Antholyns parishe, London"
+L: Watling Street [L-0281] | Trigger: wallynge Streete | LocatedIn: St Antholin's Parish [L-0228]
+L: St Antholin's Parish [L-0228] | Trigger: Sᶜᵗ Antholyns parishe | LocatedIn: London [L-0150]
+L: London [L-0150] | Trigger: London
+
+Example 2 — "a house in Watling Street"; and elsewhere in the document: "the house is in London"
+L: House [L-0114] | Trigger: house
+R: Located at/in [R-0042] | Trigger: in Watling Street | Subject: House [L-0114] | Object: Watling Street [L-0281]
+L: Watling Street [L-0281] | Trigger: Watling Street | LocatedIn: London [L-0150]
+L: London [L-0150] | Trigger: London
+House takes an L: tag but no LocatedIn: field, because it is a generic, unnamed location. Its containment is carried by the R: tag instead.
+
+Example 3 — "the Bell Inne in Dartforde in Kent"
+L: Bell Inn [NEW-L-0001] | Trigger: Bell Inne | LocatedIn: Dartford [NEW-L-0002] | LocatedIn: Kent [L-0124]
+L: Dartford [NEW-L-0002] | Trigger: Dartforde | LocatedIn: Kent [L-0124]
+L: Kent [L-0124] | Trigger: Kent
+Bell Inn is named, so it may take a LocatedIn: field. Because Dartford has no existing L-ID, the next-largest containing location (Kent) is also recorded.
+
+══════════════════════════════════════════════════════
+11. Vessel Name Type Syntax
+The Vessel Name (V:) tag records named ships appearing in the document.
+Use V: only when a vessel is identified by a specific name (e.g., "Mayflower of Barnstaple").
+Do NOT use V: for generic vessel terms (e.g., ship, boat, barge, ketch, barque). Tag these as Thing (T:).
+
+11.1 Schema (Fixed Order)
+V: Headword [V-ID] | Trigger: | HomePort: [L-ID]
+Include the HomePort: field only when supported by explicit lexical evidence.
+
+11.2 Field Definitions
+
+Headword
+The full normalized name of the vessel, including the home port designation when it is part of the name (e.g., Lion of Bristol).
+
+Trigger
+The exact surface word or phrase from the text.
+
+HomePort [L-ID]
+The location associated with the vessel's name, when explicitly stated.
+Rules:
+• Include only when the home port is part of the vessel name or otherwise expressly stated to be the home port of the vessel.
+• Must be supported by a lexical trigger in the text.
+• Must reference a Location (L-ID).
+The home port must also be tagged separately as a Location (L:) entity.
+If no home port is expressly indicated, omit the HomePort field.
+
+══════════════════════════════════════════════════════
+12. Attribute Tags in the Entity Registry
+Attribute (A:) tags record adjectival properties of entities. With one exception, Attribute tags do not appear in the Entity Tagger.
+
+The one exception is the Attribute: field within SI: tags.
+
+12.1 Attribute: Field in SI: Tags
+The Attribute: field within an SI: tag records adjectival descriptors of an unnamed person. It exists in the Entity Registry because that is the only way attributes of unnamed persons can be reliably anchored to a specific individual.
+
+Rules:
+• The Attribute: field in SI: tags takes an A-ID from the Attributes_List.
+• All attributes in the Attribute: field must have express lexical triggers. They must not be inferred from context.
+• Nationality words are recorded as A-ID values in this field. Nationality must not be inferred merely from residence, work location, or affiliation. An explicit adjectival trigger is required (e.g., "a Portuguese merchant," "a Dutch stranger").
+• The Attribute: field may be repeated for multiple attributes. Each field must be its own pipe-separated Key: Value pair.
+• Attributes describing the group as a whole may appear in group SI: tags (Plural: yes) only when the text unambiguously assigns that attribute to all members of the group.
+
+══════════════════════════════════════════════════════
+13. Entity Registry Tagger Notes & Questions Block
+
+After the Entity Registry, the Tagger appends a single block recording decisions and uncertainties that need the user's attention, when there are any to record. The block appears after all Entity Registry tags and begins with the line TAGGER NOTES & QUESTIONS. It has two groups — Questions and Notes — distinguished by whether the matter can be settled on sight:
+
+- A Question records an open decision the Tagger resolved with a best-supported reading that a domain expert could confirm or change on sight.
+- A Note records residual uncertainty the Tagger could not resolve and that would require research or external lookup to settle.
+
+Omit either group when it has no entries; omit the block entirely when both are empty.
+
+13.1 Questions
+
+A Question is warranted only when the document and knowledge base underdetermine a decision AND a domain expert could settle it without research. The recurring kinds:
+
+- A disambiguation the watch list and context do not settle.
+- A Type assignment that changes the ID — an instrument as the physical Thing versus the obligation it records; a named court or staple as Institution versus Location.
+- An attribution — a description, clause, or pronoun that could attach to more than one entity, where the choice changes a tag.
+- A rule that yields two defensible taggings for the instance, including whether a licensed Relationship inference is warranted at all.
+- A boilerplate-versus-tag borderline that Legal_Boilerplate.txt and the rules do not decide.
+- A document date or ImputedBirthYear left underdetermined after the Header rule and §7.4, or any internal contradiction in the body that changes a tag.
+
+Form: number each Question. Quote the exact triggering text, give the reading applied and the alternative, and name the consequence of each (which Headword/ID, tag-or-not, which date). The reading applied stands unless the user changes it.
+
+Example:
+1. "Bill" — applied Bill [INT-0005] (a financial obligation); alternative Billhook [T-0034] (a weapon). Consequence: Intangible vs. Thing, and a different ID.
+
+13.2 Notes
+
+A Note is warranted only when the uncertainty cannot be resolved from the document and available knowledge — when settling it would require research or external lookup. The recurring kinds:
+
+- an identity ambiguity between two or more existing Named Persons with the identical normalized first name and surname
+- an entity whose identity or scope the document does not fix
+- a homonym or Headword choice that the document and available knowledge cannot settle
+- a new entity recorded with a NEW-ID that may match an existing Entity List entry
+
+Form: each Note on its own line, concise and specific, referring to the entity by Headword and ID where one exists.
+
+Examples:
+- John Smythe [P-0369] — possible identity with John Smythe [P-0370]; the text does not distinguish them.
+- NEW-P-0007 (John Jones) — possible match to John Jones [P-0123] in the Entity List.
+- "Lyne" — may be King's Lynn or Lyme Regis; the document does not fix which.
+
+13.3 Restrictions
+
+The block must not include explanations of ordinary tagging decisions, document summaries, restatements of the text, general commentary, or speculation not grounded in the document or the Entity List.
+
+Notes are advisory only and do not affect the structure or correctness of the Entity Registry. A Question's applied reading is part of the Registry and stands unless the user changes it.

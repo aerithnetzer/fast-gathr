@@ -1,0 +1,217 @@
+{
+  "fixture_notice": "Sample-output-backed prototype state. No real Claude/API call, PostgreSQL write, graph backend, RAG, or historian validation is represented.",
+  "summary": {
+    "status": "Sample output",
+    "text": "Bartholomew Kightley describes a 1574 Exchequer dispute involving Lady Joan Laxton and a GBP 500 debt owed by the late Francis Kightley. The deposition focuses on forbearance of the debt, new bonds, payments, damask, velvet, and a payment to Laxton's servant Edmonde."
+  },
+  "keywords": {
+    "status": "Sample output",
+    "items": [
+      "Debt",
+      "Forbearance",
+      "Bonds",
+      "Usury",
+      "Gift",
+      "Damask",
+      "Velvet",
+      "Servant mediation"
+    ]
+  },
+  "pipeline": [
+    {"label": "Document", "status": "done"},
+    {"label": "Summary & Keyword", "status": "done"},
+    {"label": "Entity Registry", "status": "done"},
+    {"label": "Clause Parser", "status": "done"},
+    {"label": "Occurrences Registry", "status": "done"},
+    {"label": "Tag Assembler", "status": "future"},
+    {"label": "Key Narrative Tagger", "status": "future"},
+    {"label": "Review", "status": "review"},
+    {"label": "Accept & Extract", "status": "future"}
+  ],
+  "annotations": [
+    {
+      "type": "P",
+      "headword": "Bartholomew Kightley",
+      "stable_id": "P-0328",
+      "evidence_form": "Bartholomew Kightley",
+      "clause_ids": ["0001", "0003", "0005", "0008", "0010", "0012"],
+      "stage": "Entity Registry",
+      "review_state": "Matched sample output",
+      "note": "Existing controlled-vocabulary person ID reused in the sample output."
+    },
+    {
+      "type": "P",
+      "headword": "Joan Laxton",
+      "stable_id": "P-0344",
+      "evidence_form": "Lady Laxton",
+      "clause_ids": ["0001", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011"],
+      "stage": "Entity Registry",
+      "review_state": "Matched sample output",
+      "note": "Displayed forms include Lady Laxton, Ladye Laxston, and related spellings in the original sample."
+    },
+    {
+      "type": "P",
+      "headword": "Francis Kightley",
+      "stable_id": "P-0329",
+      "evidence_form": "Francis Kightley",
+      "clause_ids": ["0004", "0007"],
+      "stage": "Entity Registry",
+      "review_state": "Matched sample output",
+      "note": "Debt and alleged deathbed gift are both tied to this person in the sample output."
+    },
+    {
+      "type": "P",
+      "headword": "William Beswicke",
+      "stable_id": "P-0056",
+      "evidence_form": "William Beswicke",
+      "clause_ids": ["0005", "0008"],
+      "stage": "Entity Registry",
+      "review_state": "Matched sample output",
+      "note": "One of the parties seeking forbearance and sealing bonds."
+    },
+    {
+      "type": "P",
+      "headword": "Robert Thomson",
+      "stable_id": "P-0572",
+      "evidence_form": "Robert Thomson",
+      "clause_ids": ["0005", "0008"],
+      "stage": "Entity Registry",
+      "review_state": "Matched sample output",
+      "note": "One of the parties seeking forbearance and sealing bonds."
+    },
+    {
+      "type": "T",
+      "headword": "Damask",
+      "stable_id": "T-0047",
+      "evidence_form": "damask",
+      "clause_ids": ["0007", "0009", "0010"],
+      "stage": "Entity Registry",
+      "review_state": "Matched sample output",
+      "note": "Textile object at issue in the payment and gift sequence."
+    },
+    {
+      "type": "T",
+      "headword": "Velvet",
+      "stable_id": "T-0206",
+      "evidence_form": "velvet",
+      "clause_ids": ["0010"],
+      "stage": "Entity Registry",
+      "review_state": "Matched sample output",
+      "note": "Sample output records a payment toward velvet to guard a gown."
+    },
+    {
+      "type": "P",
+      "headword": "Edmonde",
+      "stable_id": "NEW-P-0001",
+      "evidence_form": "Edmonde",
+      "clause_ids": ["0011"],
+      "stage": "Entity Registry",
+      "review_state": "Needs NEW-ID review",
+      "note": "First-name-only servant record; kept provisional."
+    }
+  ],
+  "entity_registry": [
+    {"type": "P", "headword": "Joan Laxton", "stable_id": "P-0344", "forms": "Lady Laxton; Lady Laxstone", "review_state": "matched"},
+    {"type": "P", "headword": "Bartholomew Kightley", "stable_id": "P-0328", "forms": "Bartholomew Kightley; Bartholomew Kyghley", "review_state": "matched"},
+    {"type": "P", "headword": "Francis Kightley", "stable_id": "P-0329", "forms": "Francis Kightley; ffraunces kightley", "review_state": "matched"},
+    {"type": "P", "headword": "Edmonde", "stable_id": "NEW-P-0001", "forms": "Edmonde; Edmounde", "review_state": "new-id-review"}
+  ],
+  "events": [
+    {
+      "event_id": "NEW-EV-0001",
+      "label": "Deposition Taken",
+      "event_type": "Deposition",
+      "clause_ids": ["0002", "0003"],
+      "review_state": "Sample output",
+      "description": "John Birche takes the deposition of Bartholomew Kightley in the Court of Exchequer."
+    },
+    {
+      "event_id": "NEW-EV-0002",
+      "label": "Loan / Debt of GBP 500",
+      "event_type": "Debt",
+      "clause_ids": ["0004"],
+      "review_state": "Sample output",
+      "description": "Francis Kightley is described as owing Lady Laxton GBP 500, borrowed for the old Lord Marquess of Winchester."
+    },
+    {
+      "event_id": "NEW-EV-0003",
+      "label": "Request and Agreement for Forbearance",
+      "event_type": "Forbearance",
+      "clause_ids": ["0005", "0006"],
+      "review_state": "Sample output",
+      "description": "Kightley, Beswicke, and Thomson ask Lady Laxton to forbear the debt until 22 December; she agrees."
+    },
+    {
+      "event_id": "NEW-EV-0004",
+      "label": "New Bonds for Assurance",
+      "event_type": "Bond",
+      "clause_ids": ["0006", "0008"],
+      "review_state": "Sample output",
+      "description": "New bonds are entered to assure payment of the GBP 500."
+    },
+    {
+      "event_id": "NEW-EV-0005",
+      "label": "Payment for Forbearance",
+      "event_type": "Payment",
+      "clause_ids": ["0008"],
+      "review_state": "Sample output",
+      "description": "Twenty-five pounds is paid to Lady Laxton for forbearance of the debt."
+    },
+    {
+      "event_id": "NEW-EV-0006",
+      "label": "Delivery of Damask",
+      "event_type": "Delivery / Gift",
+      "clause_ids": ["0007", "0009", "0010"],
+      "review_state": "Sample output",
+      "description": "Damask is demanded and delivered to Lady Laxton."
+    },
+    {
+      "event_id": "NEW-EV-0007",
+      "label": "Payment Toward Velvet",
+      "event_type": "Payment",
+      "clause_ids": ["0010"],
+      "review_state": "Sample output",
+      "description": "Fifty shillings is paid toward velvet to guard Lady Laxton's gown."
+    },
+    {
+      "event_id": "NEW-EV-0008",
+      "label": "Payment to Edmonde",
+      "event_type": "Payment",
+      "clause_ids": ["0011"],
+      "review_state": "Sample output",
+      "description": "Twenty shillings is given to Edmonde for travel and friendship with Lady Laxton."
+    }
+  ],
+  "new_id_proposals": [
+    {
+      "proposed_id": "NEW-P-0001",
+      "type": "P",
+      "headword": "Edmonde",
+      "evidence_form": "Edmonde; Edmounde",
+      "source_clause": "0011",
+      "status": "Pending historian review"
+    },
+    {
+      "proposed_id": "NEW-EV-0002",
+      "type": "EV",
+      "headword": "Loan / Debt of GBP 500",
+      "evidence_form": "died indebted; borrowed",
+      "source_clause": "0004",
+      "status": "Placeholder event ID"
+    },
+    {
+      "proposed_id": "NEW-EVTYPE-0005",
+      "type": "EVTYPE",
+      "headword": "Payment",
+      "evidence_form": "paid; given",
+      "source_clause": "0008",
+      "status": "Placeholder event-type review"
+    }
+  ],
+  "tag_assembler_placeholder": "This panel will display the assembled full tag set returned by the Tag Assembler. In the current prototype, sample outputs stand in for live chatbot returns and no full tagset has been validated.",
+  "key_narrative_future": "Future module: Chatbot 6 / Key Narrative Tagger has not yet been written in the May 2026 plan.",
+  "full_tagset_placeholder": "Full Tagset is represented through the Tag Assembler placeholder. This prototype does not parse or validate the complete EMTL/GATHR tagset.",
+  "technical_details": "{\n  \"storage\": \"sample JSON outputs seeded into SQLite StageOutput records + SQLite local NEW-ID review + SQLite stage rerun requests\",\n  \"workflow_ui\": \"document-first landing page followed by sequential stage review; selected outputs are not all displayed at once\",\n  \"database_target\": \"SQLite locally; PostgreSQL-compatible models drafted\",\n  \"pipeline_authority\": \"Emily May 2026 working pipeline, represented as configurable metadata\",\n  \"auto_dependency_completion\": false,\n  \"real_chatbot_integration\": false,\n  \"real_postgresql_commit\": false\n}",
+  "raw_output_excerpt": "Entity Registry Answer (Key Mode): P: Joan Laxton [P-0344] | P: Bartholomew Kightley [P-0328] | P: Edmonde [NEW-P-0001] ... Occurrences Registry / Event Registry sample output: NEW-EV-0002 Loan / Debt of GBP 500 ...",
+  "provenance": "{\n  \"source\": \"Local prototype sample outputs derived from legacy sample material for E-133-2-211_dep01\",\n  \"created_for\": \"historian-facing Django workbench UI iteration 5\",\n  \"not_claimed\": [\"real chatbot execution\", \"historian validation\", \"PostgreSQL commit\", \"graph backend\", \"RAG backend\"]\n}"
+}

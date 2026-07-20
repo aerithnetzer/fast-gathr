@@ -145,3 +145,29 @@ variable "mcp_domain" {
   type        = string
   default     = "mcp.gathrlab.org"
 }
+
+# ── EMTL Historian Workflow (Django) ─────────────────────────────────────────
+
+variable "emtl_domain" {
+  description = "Public DNS name for the EMTL Django app (e.g. app.gathrlab.org)."
+  type        = string
+  default     = "app.gathrlab.org"
+}
+
+variable "emtl_image_tag" {
+  description = "Docker image tag for the EMTL Django app. Set by CI to the commit SHA."
+  type        = string
+  default     = "latest"
+}
+
+variable "emtl_task_cpu" {
+  description = "Fargate task CPU units for the EMTL app (256 = 0.25 vCPU)."
+  type        = number
+  default     = 512
+}
+
+variable "emtl_task_memory" {
+  description = "Fargate task memory in MiB for the EMTL app."
+  type        = number
+  default     = 1024
+}

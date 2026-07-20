@@ -1,0 +1,107 @@
+KEYWORD REFERENCE GUIDE (v2)
+
+PURPOSE AND STATUS OF THE REGISTRY
+Keywords prioritize commercial practices and fraudulent or deceptive activity. The Keyword
+Registry is now MATURE: it provides broad, settled coverage of the research interests below across
+five areas — Commerce Practice; Goods & Commodity; Credit & Debt; Honesty/Ethics/Reputation; and
+Social/Cultural dimensions of trade. Because the registry is mature, the default posture has
+changed: PREFER AN EXISTING KEYWORD. Reach for the Registry first and tag from it; treat the
+creation of a new keyword as the rare exception governed by the narrow rules at the end of this
+guide, NOT as a routine response to an unlisted detail.
+
+AREAS OF INTEREST (what keywords are FOR)
+Assign keywords (from the Registry) that illuminate:
+- Trading and contracting practices — local, regional, or international.
+- Markets, fairs, and trade conducted in shops, streets, shambles, ports, docks, bourses, and any
+  other place of exchange.
+- Trade in specific commodities, and the practices distinctive to particular trades.
+- Trading companies and their trade abroad.
+- Relationships among merchants, factors, and brokers, and the hiring of and contracting with them.
+- The activities of commercial actors: merchants, artisans, traders, brokers, factors, apprentices,
+  female traders, alien merchants, partnerships, bankrupts.
+- Commercial dispute resolution through mediation and arbitration (as lived experience, not
+  procedure).
+- The failure of credit: imprisonment for debt, bankruptcy, compounding of debt, absconding debtors,
+  pledge and pawn.
+- Fraudulent or deceitful practices, schemes, card-sharps, swindles, forgeries, and fraudulent
+  conveyances for sham or no consideration done to hinder, delay, or defraud creditors.
+- A person trusting, perhaps unwisely, and that trust being violated.
+- A person's reputation or creditworthiness.
+
+These orient ATTENTION only. They do not justify inference, conclusion, or overstatement, and they
+do not by themselves justify a new keyword — each of these areas is already represented in the
+Registry.
+
+USING THE REGISTRY (the default path)
+- Consult the Keyword Registry and select the existing keyword(s) the document's substance supports.
+- A keyword applies only when its concept is expressly named or clearly described in the document,
+  with verbatim evidence; never on inference, implication, or probability alone.
+- Two related keywords at different levels of abstraction may both apply (e.g. a specific trade AND
+  the general practice); do not drop the higher-level category because a specific one is present.
+- Do NOT broaden, reinterpret, or stretch a keyword's meaning to fit, and do NOT invent near-
+  synonyms for a listed keyword. If the fit requires bending the definition, the keyword does not
+  apply.
+- Under-generation is correct: a document may warrant zero, one, or two keywords. Do not pad.
+
+CREATING A NEW KEYWORD (the narrow exception)
+The registry is broad and settled, so new keywords are now the EXCEPTION, not a routine output.
+Before proposing one, confirm that NO existing keyword — at either a specific OR a general level of
+abstraction — covers the concept, and that the gap is real rather than a wording mismatch with an
+existing keyword.
+
+There are exactly TWO openings under which a new keyword may be proposed. These are exhaustive: a
+candidate that does not fall squarely within Opening 1 or Opening 2 is not a new keyword — tag
+existing keywords, or none.
+
+  OPENING 1 — A NEW TRADE OR COMMODITY CLASS (the primary, expected opening).
+  The registry deliberately differentiates trade practices, so a trade or commodity class not yet
+  represented may earn its own Goods & Commodity keyword once the document gives concentrated
+  material on that trade (not a passing mention). The existing trade keywords are the model and the
+  level of abstraction: Cloth Trade, Wool Trade, Spice Trade, Sugar Trade, Metals Trade. A new one
+  must sit at that SAME level — a trade or commodity CLASS (e.g. a Leather Trade, a Wine Trade, a
+  Victualling Trade, a Timber Trade), NOT a single named commodity or product, and NOT a sub-type of
+  a trade already keyed.
+
+  OPENING 2 — A GENUINELY NEW COMMERCIAL MECHANISM (rare; high bar).
+  A distinct commercial process or device not reducible to any existing keyword may be proposed, but
+  only when ALL of the following hold:
+    (a) it is a recurring KIND of commercial practice, mechanism, or relationship — not a one-off
+        fact, not a wrong/offence (discrete wrongs are handled by event-tagging, not keywords),
+        and not a procedural or litigation artifact;
+    (b) it is clearly and specifically distinguished from EVERY existing keyword, including the
+        broad ones (Fraud, Reckoning, Contract Term, Network, Custom, Market Regulation,
+        Partnership, Factorage, Trusting, Reputation), so that it is not a synonym, sub-case, or
+        re-description of one already listed; and
+    (c) it sits at the SAME level of abstraction as existing keywords — neither narrower than a
+        single instance nor broader than the existing categories.
+  If a candidate mechanism can be expressed by tagging one or two existing keywords (even imperfectly),
+  do NOT create a new keyword; tag the existing ones.
+
+OPENINGS THAT ARE NOW EFFECTIVELY CLOSED
+- New SOCIAL/CULTURAL keywords: the social/cultural dimension is already represented (Female
+  Merchant, Literacy, Insult, Gossip, Sleep, Time of Day, Quoted Speech, Translators). Do not add to
+  this set absent an exceptional, clearly distinct, recurring phenomenon; default to existing.
+- Single commodities or products, single named schemes, regional variants, or one-off details:
+  these are NOT keywords. Tag the relevant existing keyword(s) instead, or none.
+- Anything expressible as a combination of existing keywords: tag the combination; do not coin a new
+  term for the intersection.
+
+NEW-KEYWORD PROPOSAL DISCIPLINE
+- Propose sparingly. In most documents the correct number of new keywords is zero.
+- A proposal must name which opening it falls under (Opening 1 or Opening 2), state why no existing
+  keyword (specific or general) covers it, and give the verbatim triggering evidence.
+- A proposal is a suggestion for human review, not a self-approved addition to the Registry.
+
+CURRENT REGISTRY (for reference; consult the Registry file itself for definitions and evidence)
+Commerce Practice: Business Negotiation, Commission Terms, Consignment, Delivery Terms, Price
+  Abatement, Sample Trade, Brokerage, Factorage, Fair Business, Market Business, Retail Commerce,
+  Wholesale Commerce, International Trade, Partnership, Network.
+Goods & Commodity: Cloth Trade, Spice Trade, Sugar Trade, Wool Trade, Metals Trade.
+Credit & Debt: Credit Sale, Installment Payment, Compounding Debt, Credit Price Differential,
+  Reckoning, Payment in Specie, Absconding Debtor, Bankruptcy, Debtor's Prison, Value of Goods,
+  Pledge & Pawn.
+Honesty/Ethics/Reputation: Common Informer, Insurance, Fraudulent Conveyance, Fraud, Swindle, Good
+  Faith, Trusting, Reputation, Contract Term, Warranty, Unmerchantable Goods, Inspection of Goods,
+  Custom, Market Regulation, Mediation.
+Social/Cultural: Female Merchant, Literacy, Insult, Gossip, Sleep, Time of Day, Quoted Speech,
+  Translators.

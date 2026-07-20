@@ -1,0 +1,599 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EMTL Tagger Workbench</title>
+  <link rel="stylesheet" href="{% static 'tagger/workbench.css' %}">
+</head>
+<body>
+  {% include "tagger/_site_header.html" %}
+
+  <main class="workbench-shell {% if entry_only %}entry-shell{% endif %}">
+    {% if entry_only %}
+    <section class="document-entry">
+      <div>
+        <p class="eyebrow">Start</p>
+        <h2>{% if entry_only %}Choose a document{% else %}Document workspace{% endif %}</h2>
+        <p>
+          Select the sample deposition or upload a document to enter the tagging workflow.
+          Current chatbot outputs are sample returns until live chatbot access is connected.
+        </p>
+      </div>
+      <div class="entry-actions">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="use_sample">
+          <button type="submit">Use sample document</button>
+        </form>
+        <form method="post" enctype="multipart/form-data" class="upload-form auto-upload-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="upload_document">
+          <label class="file-picker">
+            <span>Upload document</span>
+            <input type="file" name="document_file" accept=".txt,.md,.csv,.xml,.html,.htm,.doc,.docx,.pdf">
+          </label>
+          <button type="submit" class="secondary-button upload-submit-fallback">Upload document</button>
+          <span class="upload-status-text" aria-live="polite"></span>
+        </form>
+        {% if not entry_only %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="clear_document">
+            <button type="submit" class="ghost-button">Change</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+
+      <section class="entry-panel">
+        <p class="eyebrow">Current workflow</p>
+        <h3>Emily May 2026 pipeline alignment</h3>
+        <div class="entry-grid">
+          <article>
+            <strong>Independent first stages</strong>
+            <p>Summary & Keyword, Entity Registry, and Clause Parser each use Header + text.</p>
+          </article>
+          <article>
+            <strong>Dependent stages</strong>
+            <p>Occurrences Registry and Tag Assembler display warnings when prerequisite outputs are not selected.</p>
+          </article>
+          <article>
+            <strong>Review before extraction</strong>
+            <p>Accept & Extract is represented as a future database write, not a live PostgreSQL commit.</p>
+          </article>
+        </div>
+      </section>
+    {% else %}
+      <section class="workflow-chrome">
+        <section class="document-banner">
+          <div>
+            <p class="eyebrow">Active document</p>
+            <h2>{{ document.metadata.title }}</h2>
+            <p>
+              {% if document.metadata.archival_reference %}{{ document.metadata.archival_reference }} | {% endif %}
+              {% if document.metadata.normalized_date %}{{ document.metadata.normalized_date }} | {% endif %}
+              {{ document.metadata.document_type }}
+            </p>
+          </div>
+          <div class="entry-actions">
+            <a class="ghost-button" href="{% url 'tagger:home' %}">Change document</a>
+            <form method="post" action="{% url 'tagger:workbench' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="reset_workflow">
+              <button type="submit" class="ghost-button">Reset workflow</button>
+            </form>
+            <div class="status-pill">Sequential workflow</div>
+          </div>
+        </section>
+
+        <form class="toolbar" method="get" action="{% url 'tagger:workbench' %}" aria-label="Tagging options">
+          <input type="hidden" name="clause" value="{{ selected_clause_id }}">
+          <input type="hidden" name="options_applied" value="1">
+          {% for control in tagging_controls %}
+            <label class="switch-control" title="{{ control.description }}">
+              <input type="checkbox" name="{{ control.key }}" {% if control.checked %}checked{% endif %}>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+              <span class="switch-label">{{ control.label }}</span>
+            </label>
+          {% endfor %}
+          <button class="secondary-button" type="submit">Apply</button>
+        </form>
+
+        {% if dependency_warnings %}
+          <section class="warning-strip" aria-label="Pipeline warnings">
+            {% for warning in dependency_warnings %}
+              <p>{{ warning.message }}</p>
+            {% endfor %}
+          </section>
+        {% endif %}
+
+        {% if source_text_changed %}
+          <section class="warning-strip source-change-warning" aria-label="Source text warning">
+            <p>{{ source_text_change_note }}</p>
+          </section>
+        {% endif %}
+
+        <section class="pipeline" aria-label="Pipeline progress">
+          {% for stage in pipeline %}
+            <div class="stage {{ stage.status }} {% if stage.is_active %}active-stage{% endif %}" title="{{ stage.detail }}">
+              <span class="stage-dot"></span>
+              <span class="stage-text">{{ stage.label }}</span>
+              <span class="stage-status">{{ stage.status_label }}</span>
+            </div>
+          {% endfor %}
+        </section>
+
+        {% if workflow_stage_items %}
+          <section class="workflow-sequence" aria-label="Selected workflow sequence">
+            {% for item in workflow_stage_items %}
+              <div class="workflow-step {{ item.state }}">
+                <span class="workflow-step-number">{{ item.index }}</span>
+                <div>
+                  <strong>{{ item.label }}</strong>
+                  <span>{{ item.status_label }} | {{ item.input_summary }}</span>
+                </div>
+                {% if item.can_open and not item.is_active %}
+                  <a href="{{ item.url }}">Open</a>
+                {% elif item.is_active %}
+                  <span class="current-marker">Current</span>
+                {% else %}
+                  <span class="queued-marker">Queued</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </section>
+        {% endif %}
+      </section>
+
+      <section class="split-pane">
+        <aside class="reader-pane" aria-label="Source document reader">
+          <div class="pane-heading">
+            <div>
+              <p class="eyebrow">{{ source_reader.eyebrow }}</p>
+              <h3>{{ source_reader.title }}</h3>
+            </div>
+            <span>{{ source_reader.reading_label }}</span>
+          </div>
+          <div class="source-reader-body">
+            <div class="source-reader-note">
+              <strong>{{ source_reader.source_label }}</strong>
+              <p>Read the continuous working source text here. Structured clause review becomes available after the Clause Parser stage has been checked or continued.</p>
+              {% if source_reader.extraction_note %}
+                <p>{{ source_reader.extraction_note }}</p>
+              {% endif %}
+            </div>
+
+            <div class="source-document-view">
+              <div class="source-document-panel">
+                {% if source_reader.metadata_rows %}
+                  <dl class="source-document-metadata">
+                    {% for row in source_reader.metadata_rows %}
+                      <div>
+                        <dt>{{ row.label }}</dt>
+                        <dd>{{ row.value }}</dd>
+                      </div>
+                    {% endfor %}
+                  </dl>
+                {% endif %}
+                <div class="source-document-text">{{ source_reader.full_text }}</div>
+              </div>
+            </div>
+
+            <details class="working-text-editor">
+              <summary>Edit working text</summary>
+              <p>{{ source_reader.edit_note }}</p>
+              <form method="post" action="{% url 'tagger:workbench' %}?clause={{ selected_clause_id }}&{{ toggle_query }}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_source_text">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <textarea name="source_text" rows="16">{{ source_reader.full_text }}</textarea>
+                <button type="submit" class="secondary-button">Save working text</button>
+              </form>
+            </details>
+
+            <details class="clause-reader-details" {% if source_reader.parser_available %}open{% endif %}>
+              <summary>Clause Parser view</summary>
+              <p>{{ source_reader.parser_note }}</p>
+              {% if source_reader.parser_available %}
+                <div class="clause-list compact">
+                  {% for clause in clauses %}
+                    <a class="clause-card {% if clause.is_selected %}selected{% endif %}" href="?clause={{ clause.clause_id }}&{{ toggle_query }}">
+                      <span class="clause-id">Clause {{ clause.clause_id }}</span>
+                      <span class="clause-text">{{ clause.html }}</span>
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="stage-ready-box">
+                  <strong>Clause Reader not opened yet</strong>
+                  <p>Use Check output or Continue with this output on Clause Parser when you want to treat the working text as parsed clause output.</p>
+                </div>
+              {% endif %}
+            </details>
+          </div>
+        </aside>
+
+        <section class="review-pane" aria-label="Output review">
+          <div class="pane-heading">
+            <div>
+              <p class="eyebrow">Current stage</p>
+              <h3>{{ active_stage_label }}</h3>
+            </div>
+            <div class="review-header-actions">
+              <span class="review-state">{{ review_summary.approved }} approved / {{ review_summary.rejected }} rejected</span>
+              {% if show_new_id_review and active_stage_output and active_stage_output.status != "accepted" and active_stage_review_summary.pending %}
+                <form method="post" action="{% url 'tagger:update_stage_output' active_stage_output.id 'approve-pending' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="secondary-button compact-button">Accept all remaining</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+
+          <div id="annotation-detail" class="annotation-detail" hidden></div>
+
+          {% if not active_stage_id %}
+            <section class="panel">
+              <div class="panel-title">
+                <h4>Choose tagging outputs</h4>
+                <span>Workflow setup</span>
+              </div>
+              <p>Select one or more tagging outputs in the toolbar to begin the stage sequence.</p>
+            </section>
+          {% endif %}
+
+          {% for card in stage_cards %}
+            <section class="panel stage-card {{ card.status }}">
+              <div class="panel-title">
+                <div>
+                  <h4>{{ card.profile.label }}</h4>
+                  <p class="panel-kicker">Stage-level output review</p>
+                </div>
+                <span class="status-badge stage-status-badge {{ card.status }}">{{ card.status_label }}</span>
+              </div>
+
+              <div class="stage-meta-row">
+                <span class="meta-chip">Inputs: {{ card.input_summary }}</span>
+                {% if card.requires_labels %}
+                  <span class="meta-chip">Uses: {{ card.requires_labels|join:", " }}</span>
+                {% endif %}
+              </div>
+
+              <div class="stage-actions">
+                {% if card.status == "accepted" %}
+                  <span class="accepted-stage-note">Accepted locally and passed forward. This stage is now read-only in the prototype workflow.</span>
+                {% else %}
+                  <form method="post" action="{% url 'tagger:update_stage_output' card.stage_output.id 'run-local' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit">Run with local model</button>
+                  </form>
+                  <form method="post" action="{% url 'tagger:update_stage_output' card.stage_output.id 'run-fixture' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="secondary-button">Restore fixture</button>
+                  </form>
+                  {% if card.stage_id == "occurrences_registry" %}
+                    <form method="post" action="{% url 'tagger:update_stage_output' card.stage_output.id 'refresh-event-candidates' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <button type="submit" class="secondary-button">Refresh Event candidates</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{% url 'tagger:update_stage_output' card.stage_output.id 'check' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="secondary-button">Check output</button>
+                  </form>
+                  <form method="post" action="{% url 'tagger:update_stage_output' card.stage_output.id 'continue' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ card.workflow_auto_url }}">
+                    <button type="submit" class="secondary-button {% if not card.action_detail.can_continue %}warning-button{% endif %}" {% if not card.action_detail.can_continue %}disabled{% endif %}>
+                      Continue with this output
+                    </button>
+                  </form>
+                  <details class="diagnostics-panel">
+                    <summary>Backend integration diagnostics</summary>
+                    <p>For integration testing only. This builds the provider request/provenance shape and records a structured unavailable result. It does not call a real backend.</p>
+                    <form method="post" action="{% url 'tagger:update_stage_output' card.stage_output.id 'run-backend-stub' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <button type="submit" class="secondary-button">Probe backend stub</button>
+                    </form>
+                  </details>
+                {% endif %}
+              </div>
+
+              {% if card.action_detail.blocked_reason %}
+                <p class="stage-warning-inline">{{ card.action_detail.blocked_reason }}</p>
+              {% endif %}
+
+              {% if card.runner.status %}
+                <div class="checker-strip">
+                  <strong>Runner: {{ card.runner.status }}</strong>
+                  <span>
+                    {{ card.runner.message }}
+                    {% if card.runner.provider %} Provider: {{ card.runner.provider }}.{% endif %}
+                    {% if card.runner.model %} Model: {{ card.runner.model }}.{% endif %}
+                  </span>
+                </div>
+              {% endif %}
+
+              <div class="checker-strip">
+                <strong>Checker / verifier</strong>
+                <span>{{ card.checker_note }}</span>
+              </div>
+
+              {% if not card.show_output %}
+                <div class="stage-ready-box">
+                  <strong>Output ready</strong>
+                  <p>Choose Check output to review it first, or Continue with this output to pass the current sample-backed result forward locally.</p>
+                </div>
+              {% elif card.stage_id == "summary_keywords" %}
+                {% if card.show_summary %}
+                  <p>{{ card.summary.text }}</p>
+                {% endif %}
+                {% if card.show_keywords %}
+                  <div class="chip-row">
+                    {% for keyword in card.keywords.items %}
+                      <span class="chip">{{ keyword }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% elif card.stage_id == "entity_registry" %}
+                <div class="record-list">
+                  {% for item in card.clause_annotations %}
+                    <article class="record">
+                      <strong>{{ item.type }} | {{ item.headword }}</strong>
+                      <span>{{ item.stable_id }} | {{ item.review_state }}</span>
+                      <p>Evidence: {{ item.evidence_form }}</p>
+                    </article>
+                  {% empty %}
+                    <p class="muted">No sample entity records are attached to this clause.</p>
+                  {% endfor %}
+                </div>
+              {% elif card.stage_id == "clause_parser" %}
+                <p>{{ card.selected_clause_text }}</p>
+                <p class="muted">{{ card.notice }}</p>
+              {% elif card.stage_id == "occurrences_registry" %}
+                <div class="record-list">
+                  {% for event in card.clause_events %}
+                    <article class="record event-record">
+                      <strong>{{ event.event_id }} | {{ event.label }}</strong>
+                      <span>{{ event.event_type }} | {{ event.review_state }}</span>
+                      <p>{{ event.description }}</p>
+                    </article>
+                  {% empty %}
+                    <p class="muted">No sample occurrence record is linked to this clause.</p>
+                  {% endfor %}
+                </div>
+                {% if card.event_lookup_candidates %}
+                  <details>
+                    <summary>Development Event headword candidates</summary>
+                    {% for package in card.event_lookup_candidates %}
+                      <div class="record">
+                        <strong>Clause {{ package.clause_id }}</strong>
+                        <span>{{ package.query_scope }}</span>
+                        {% for candidate in package.candidates %}
+                          <p>
+                            {{ candidate.event_id }} | {{ candidate.headword }}
+                            | {{ candidate.score }}
+                            {% if candidate.matched_example %}| {{ candidate.matched_example }}{% endif %}
+                          </p>
+                        {% endfor %}
+                      </div>
+                    {% endfor %}
+                  </details>
+                {% endif %}
+              {% elif card.stage_id == "tag_assembler" %}
+                <p>{{ card.placeholder }}</p>
+                <p class="muted">{{ card.full_tagset_placeholder }}</p>
+              {% elif card.stage_id == "key_narrative" %}
+                <p>{{ card.future_notice }}</p>
+              {% endif %}
+
+              {% if card.raw_output %}
+                <details>
+                  <summary>Raw stage output</summary>
+                  <pre>{{ card.raw_output }}</pre>
+                </details>
+              {% endif %}
+
+              {% if card.status == "checking" or card.status == "needs_rerun" %}
+                <div class="stage-request-box">
+                  <div>
+                    <strong>Request chatbot edit / rerun</strong>
+                    <p>
+                      Describe what should change in this stage output. The current prototype stores the request locally and does not rerun a chatbot.
+                    </p>
+                  </div>
+                  <form class="correction-form" method="post" action="{% url 'tagger:update_stage_output' card.stage_output.id 'request-rerun' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="target_clause" value="{{ selected_clause_id }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <textarea name="rerun_request" rows="3" placeholder="Example: split this clause differently, change the headword, or reconsider this occurrence."></textarea>
+                    <button type="submit">Save rerun request</button>
+                  </form>
+                </div>
+              {% endif %}
+
+              {% if card.review_notes %}
+                <div class="notes">
+                  {% for note in card.review_notes %}
+                    <div class="note">
+                      <strong>{{ card.profile.label }}{% if note.clause %} | Clause {{ note.clause.clause_id }}{% endif %}</strong>
+                      <p>{{ note.note }}</p>
+                      <span>{{ note.created_at|date:"Y-m-d H:i" }} | Stored locally; no chatbot rerun executed</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </section>
+            {% if card.stage_id == "occurrences_registry" and event_headword_review.available %}
+              {% include "tagger/_event_headword_review_panel.html" %}
+            {% endif %}
+          {% endfor %}
+
+          {% if final_review_active %}
+            <section class="panel final-review-panel">
+              <div class="panel-title">
+                <h4>Final review</h4>
+                <span>Accept & Extract is future DB work</span>
+              </div>
+              <p>
+                Selected stages have been continued locally. Final Accept & Extract is shown as a review/export checkpoint only; it does not write to PostgreSQL.
+              </p>
+              <div class="stage-actions">
+                <button type="button" class="secondary-button" disabled>Accept & Extract</button>
+                <a class="download-button" href="{% url 'tagger:download_fixture' 'final-review' %}">Download full tagged review</a>
+              </div>
+            </section>
+          {% endif %}
+
+          {% if show_new_id_review %}
+          <section class="panel">
+            <div class="panel-title">
+              <h4>NEW-ID review</h4>
+              <span>Item-level review | {{ review_summary.pending }} pending</span>
+            </div>
+            {% if entity_proposal_notice %}<p class="muted">{{ entity_proposal_notice }}</p>{% endif %}
+            {% if active_stage_output and active_stage_output.stage == "entity_registry" %}
+              <details class="working-text-editor">
+                <summary>Propose an Entity</summary>
+                <form method="post" action="{% url 'tagger:create_entity_proposal' active_stage_output.id %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <label><span>Type</span><select name="record_type" required>{% for value in entity_record_types %}<option value="{{ value }}">{{ value }}</option>{% endfor %}</select></label>
+                  <label><span>Headword</span><input name="headword" required></label>
+                  <label><span>Form / evidence</span><input name="evidence_form"></label>
+                  <label><span>Source clause</span><input name="source_clause" value="{{ selected_clause_id }}"></label>
+                  <label><span>Reviewer note</span><input name="reviewer_note"></label>
+                  <button type="submit" class="secondary-button">Add proposal</button>
+                </form>
+              </details>
+            {% endif %}
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Proposed ID</th>
+                    <th>Type</th>
+                    <th>Headword</th>
+                    <th>Form / evidence</th>
+                    <th>Source clause</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for proposal in new_id_proposals %}
+                    <tr class="proposal-row {{ proposal.status }}">
+                      {% if proposal.id == edit_proposal_id %}
+                        <td colspan="7">
+                          <form class="inline-edit-form" method="post" action="{% url 'tagger:update_new_id_proposal' proposal.id 'edit' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <label>
+                              <span>Proposed ID</span>
+                              <strong>{{ proposal.proposed_id }}</strong>
+                            </label>
+                            <label>
+                              <span>Type</span>
+                              <input class="table-input short" name="record_type" value="{{ proposal.record_type }}">
+                            </label>
+                            <label>
+                              <span>Headword</span>
+                              <input class="table-input" name="headword" value="{{ proposal.headword }}">
+                            </label>
+                            <label>
+                              <span>Form / evidence</span>
+                              <input class="table-input" name="evidence_form" value="{{ proposal.evidence_form }}">
+                            </label>
+                            <label>
+                              <span>Status</span>
+                              <select name="status">
+                                {% for value, label in proposal_status_choices %}
+                                  <option value="{{ value }}" {% if proposal.status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                              </select>
+                            </label>
+                            <label class="wide-edit">
+                              <span>Reviewer note</span>
+                              <textarea class="table-note" name="reviewer_note" rows="2" placeholder="Reviewer note">{{ proposal.reviewer_note }}</textarea>
+                            </label>
+                            <div class="edit-actions">
+                              <button type="submit" class="tiny-button">Save</button>
+                              <a class="tiny-link" href="?clause={{ selected_clause_id }}&{{ toggle_query }}">Cancel</a>
+                            </div>
+                          </form>
+                        </td>
+                      {% else %}
+                        <td>{{ proposal.proposed_id }}</td>
+                        <td>{{ proposal.record_type }}</td>
+                        <td>{{ proposal.headword }}</td>
+                        <td>
+                          {{ proposal.evidence_form }}
+                          {% if proposal.reviewer_note %}<p class="muted">{{ proposal.reviewer_note }}</p>{% endif %}
+                        </td>
+                        <td>{% if proposal.source_clause %}{{ proposal.source_clause.clause_id }}{% else %}{{ proposal.payload.source_clause_label }}{% endif %}</td>
+                        <td><span class="status-badge {{ proposal.status }}">{{ proposal.get_status_display }}</span></td>
+                        <td class="action-cell">
+                          <div class="proposal-actions">
+                            <form method="post" action="{% url 'tagger:update_new_id_proposal' proposal.id 'approve' %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                              <button type="submit" class="review-action approve">Approve</button>
+                            </form>
+                            <form method="post" action="{% url 'tagger:update_new_id_proposal' proposal.id 'reject' %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                              <button type="submit" class="review-action reject">Reject</button>
+                            </form>
+                            <a class="review-action edit" href="?clause={{ selected_clause_id }}&{{ toggle_query }}&edit_id={{ proposal.id }}">Edit</a>
+                          </div>
+                        </td>
+                      {% endif %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          {% endif %}
+
+          {% if show_downloads %}
+          <section class="panel">
+            <div class="panel-title">
+              <h4>Downloads</h4>
+              <span>Includes local review state where available</span>
+            </div>
+            <div class="download-row">
+              {% for artifact, label in download_artifacts %}
+                <a class="download-button" href="{% url 'tagger:download_fixture' artifact %}">{{ label }}</a>
+              {% endfor %}
+            </div>
+          </section>
+          {% endif %}
+
+          <details class="technical">
+            <summary>Technical details</summary>
+            <pre>{{ outputs.technical_details }}</pre>
+          </details>
+          <details class="technical">
+            <summary>Raw output</summary>
+            <pre>{{ outputs.raw_output_excerpt }}</pre>
+          </details>
+          <details class="technical">
+            <summary>Debug / provenance</summary>
+            <pre>{{ outputs.provenance }}</pre>
+          </details>
+        </section>
+      </section>
+    {% endif %}
+  </main>
+  <script src="{% static 'tagger/workbench.js' %}"></script>
+</body>
+</html>

@@ -46,12 +46,14 @@ jobs:
         env:
           TF_VAR_image_tag:                ${{ github.sha }}
           TF_VAR_mcp_image_tag:            ${{ github.sha }}
+          TF_VAR_emtl_image_tag:           ${{ github.sha }}
           TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
           TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: |
           terraform apply -auto-approve \
             -target=aws_ecr_repository.app \
-            -target=aws_ecr_repository.mcp
+            -target=aws_ecr_repository.mcp \
+            -target=aws_ecr_repository.emtl
 
       # ── 5b. Create ACM cert (no-op if already exists) ────────────────────────
       # Targeting just the cert so we can output the DNS validation records
@@ -63,6 +65,7 @@ jobs:
         env:
           TF_VAR_image_tag:                ${{ github.sha }}
           TF_VAR_mcp_image_tag:            ${{ github.sha }}
+          TF_VAR_emtl_image_tag:           ${{ github.sha }}
           TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
           TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: terraform apply -auto-approve -target=aws_acm_certificate.api
@@ -103,6 +106,20 @@ jobs:
           docker push "$IMAGE_URI"
           docker push "${ECR_REGISTRY}/${{ env.APP_NAME }}-mcp:latest"
 
+      # ── 7c. Build & push EMTL Django image ───────────────────────────────────
+      - name: Build and push EMTL image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="${ECR_REGISTRY}/${{ env.APP_NAME }}-emtl:${IMAGE_TAG}"
+          docker build \
+            -t "$IMAGE_URI" \
+            -t "${ECR_REGISTRY}/${{ env.APP_NAME }}-emtl:latest" \
+            -f emtl.Dockerfile .
+          docker push "$IMAGE_URI"
+          docker push "${ECR_REGISTRY}/${{ env.APP_NAME }}-emtl:latest"
+
       # ── 8. Terraform apply (full) ─────────────────────────────────────────────
       # Sensitive values are passed as TF_VAR_* env vars so they never appear
       # in logs or state files.
@@ -111,6 +128,7 @@ jobs:
         env:
           TF_VAR_image_tag:                ${{ github.sha }}
           TF_VAR_mcp_image_tag:            ${{ github.sha }}
+          TF_VAR_emtl_image_tag:           ${{ github.sha }}
           TF_VAR_db_password:              ${{ secrets.DB_PASSWORD }}
           TF_VAR_bootstrap_admin_password: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
         run: terraform apply -auto-approve
@@ -135,10 +153,18 @@ jobs:
             --force-new-deployment \
             --region   "${{ env.AWS_REGION }}"
 
+      - name: Force new ECS deployment (EMTL)
+        run: |
+          aws ecs update-service \
+            --cluster "${{ env.APP_NAME }}" \
+            --service  "${{ env.APP_NAME }}-emtl" \
+            --force-new-deployment \
+            --region   "${{ env.AWS_REGION }}"
+
       # ── 10. Wait for stability ────────────────────────────────────────────────
       - name: Wait for services to stabilize
         run: |
           aws ecs wait services-stable \
             --cluster "${{ env.APP_NAME }}" \
-            --services "${{ env.APP_NAME }}" "${{ env.APP_NAME }}-mcp" \
+            --services "${{ env.APP_NAME }}" "${{ env.APP_NAME }}-mcp" "${{ env.APP_NAME }}-emtl" \
             --region "${{ env.AWS_REGION }}"

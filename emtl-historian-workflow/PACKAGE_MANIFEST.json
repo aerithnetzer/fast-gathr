@@ -1,0 +1,41 @@
+{
+  "schema_version": "emtl-aerith-source-handoff-v1",
+  "prepared_on": "2026-07-01",
+  "purpose": "Curated Django frontend and workflow source for PostgreSQL, AWS chatbot, and S3 integration",
+  "required_reading": [
+    "README.md",
+    "docs/AERITH_INTEGRATION_GUIDE.md"
+  ],
+  "machine_facing_contracts": [
+    "emtl_django/contracts/emtl_workflow_export_v1.schema.json",
+    "emtl_django/contracts/postgresql_schema_v1.sql",
+    "emtl_django/tagger/integrations/contracts.py",
+    "emtl_django/tagger/integrations/handoff_map.json",
+    "emtl_django/tagger/services/providers/factory.py",
+    "emtl_django/tagger/services/contracts.py"
+  ],
+  "included": [
+    "Django project and Tagger application source",
+    "UI templates and static assets",
+    "Workflow, validation, review, export, and integration services",
+    "Django migrations and automated tests",
+    "Current selected chatbot prompts and controlled lists",
+    "Legacy Keyword Registry explicitly marked as temporary",
+    "Event vector authority workbook",
+    "Environment variable example without credentials"
+  ],
+  "excluded": [
+    "Oxford SSH configuration and keys",
+    "Local GPU startup and diagnostic scripts",
+    "Model weights and Hugging Face caches",
+    "SQLite databases and runtime state",
+    "Uploaded historical documents and generated outputs",
+    "Old experiments, internal planning artifacts, evaluations, and superseded documentation",
+    "AWS, database, and S3 credentials"
+  ],
+  "verification": [
+    "python manage.py check",
+    "python manage.py test tagger.tests"
+  ],
+  "cloud_status": "Interfaces and explicit unconfigured adapters are included; deployed cloud integrations are not claimed."
+}

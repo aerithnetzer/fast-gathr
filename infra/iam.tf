@@ -31,6 +31,8 @@ data "aws_iam_policy_document" "secrets_read" {
       aws_secretsmanager_secret.database_url.arn,
       aws_secretsmanager_secret.jwt_secret.arn,
       aws_secretsmanager_secret.bootstrap_admin_password.arn,
+      data.aws_secretsmanager_secret.emtl_database_url.arn,
+      aws_secretsmanager_secret.emtl_django_secret_key.arn,
     ]
   }
 }

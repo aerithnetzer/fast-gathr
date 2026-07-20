@@ -1,0 +1,17 @@
+# Production runtime requirements for the deployed Django service.
+#
+# Deliberately omits scikit-learn and sentence-transformers (and their
+# torch dependency): those are only imported lazily inside
+# tagger/services/event_lookup_dense.py, which is exercised by the local
+# GPU dense-lookup provider and a management command — neither of which
+# runs in this deployment (EMTL_STAGE_PROVIDER=unconfigured). Omitting
+# them keeps the image small. Re-add them when the AWS chatbot / dense
+# lookup adapter is implemented.
+Django>=5.0,<6.0
+python-docx>=1.1,<2.0
+openpyxl>=3.1,<4.0
+requests>=2.31,<3.0
+psycopg[binary]>=3.1,<4.0
+numpy>=1.26,<3.0
+gunicorn>=21.2,<23.0
+whitenoise>=6.6,<7.0

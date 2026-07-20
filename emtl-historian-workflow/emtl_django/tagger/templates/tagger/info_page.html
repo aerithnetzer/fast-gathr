@@ -1,0 +1,32 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EMTL {{ page_title }}</title>
+  <link rel="stylesheet" href="{% static 'tagger/workbench.css' %}">
+</head>
+<body>
+  {% include "tagger/_site_header.html" %}
+  <main class="workbench-shell info-shell">
+    <section class="info-hero">
+      <p class="eyebrow">{{ eyebrow }}</p>
+      <h2>{{ page_title }}</h2>
+      <p>{{ intro }}</p>
+    </section>
+    <section class="info-grid">
+      {% for heading, body in sections %}
+        <article class="info-card">
+          <h3>{{ heading }}</h3>
+          <p>{{ body }}</p>
+        </article>
+      {% endfor %}
+    </section>
+    <details class="technical">
+      <summary>Technical details</summary>
+      <pre>Placeholder page. No live PostgreSQL, Claude/API, RAG, graph, or world-model integration is connected in this prototype.</pre>
+    </details>
+  </main>
+</body>
+</html>

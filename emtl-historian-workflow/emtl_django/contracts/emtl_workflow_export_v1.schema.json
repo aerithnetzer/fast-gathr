@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://emtl.invalid/contracts/emtl_workflow_export_v1.schema.json",
+  "title": "EMTL Workflow Export v1",
+  "type": "object",
+  "required": ["schema_version", "contract_version", "export_id", "document", "clauses", "accepted_data", "review", "audit", "artifact_handoff", "integrity"],
+  "properties": {
+    "schema_version": {"const": "emtl-workflow-export-v1"},
+    "contract_version": {"const": "emtl-handoff-contract-v1"},
+    "export_id": {"type": "string", "minLength": 1},
+    "exported_at": {"type": "string"},
+    "document": {
+      "type": "object",
+      "required": ["document_id", "title", "metadata"],
+      "properties": {"document_id": {"type": "string", "minLength": 1}, "title": {"type": "string"}, "metadata": {"type": "object"}}
+    },
+    "clauses": {"type": "array", "items": {"type": "object", "required": ["clause_id", "sequence", "text"]}},
+    "accepted_data": {"type": "object", "required": ["stage_outputs", "final_review_decisions", "entity_registry", "event_assignments", "occurrences", "assembled_tagset"]},
+    "review": {"type": "object", "required": ["decisions", "proposals", "notes"]},
+    "orchestration": {"type": "object"},
+    "audit": {"type": "object", "required": ["stage_outputs", "execution_attempts"]},
+    "artifact_handoff": {"type": "object"},
+    "integrity": {"type": "object", "required": ["algorithm", "canonical_json_sha256", "semantic_content_sha256", "accepted_stage_ids", "nonaccepted_stage_ids_audit_only"]}
+  },
+  "additionalProperties": false
+}

@@ -16,3 +16,15 @@ wheels/
 *.tfstate.backup
 *.tfplan
 .terraform.lock.hcl
+
+# Django / EMTL
+*.sqlite3
+staticfiles/
+outputs/
+.runtime/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Deploy artifacts
+.corpus_rowcounts_baseline.tsv

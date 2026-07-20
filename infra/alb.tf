@@ -128,3 +128,61 @@ resource "aws_lb_listener_rule" "mcp_http_redirect" {
     }
   }
 }
+
+# ── EMTL Historian Workflow (Django) target group + host routing ─────────────
+
+resource "aws_lb_target_group" "emtl" {
+  name        = "${var.app_name}-emtl-tg"
+  port        = var.container_port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/healthz"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    interval            = 30
+    timeout             = 5
+    matcher             = "200"
+  }
+
+  tags = { Name = "${var.app_name}-emtl-tg" }
+}
+
+resource "aws_lb_listener_rule" "emtl_https" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 90
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.emtl.arn
+  }
+
+  condition {
+    host_header {
+      values = [var.emtl_domain]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "emtl_http_redirect" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 90
+
+  action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+  condition {
+    host_header {
+      values = [var.emtl_domain]
+    }
+  }
+}

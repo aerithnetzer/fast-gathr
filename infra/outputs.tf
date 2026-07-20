@@ -67,3 +67,18 @@ output "mcp_ecs_service_name" {
   description = "Name of the MCP ECS service."
   value       = aws_ecs_service.mcp.name
 }
+
+output "emtl_domain" {
+  description = "Public EMTL Django domain — point a CNAME from this to the ALB DNS name (proxied for Cloudflare Access)."
+  value       = var.emtl_domain
+}
+
+output "emtl_ecr_repository_url" {
+  description = "ECR repository URL for the EMTL Django image."
+  value       = aws_ecr_repository.emtl.repository_url
+}
+
+output "emtl_ecs_service_name" {
+  description = "Name of the EMTL Django ECS service."
+  value       = aws_ecs_service.emtl.name
+}

@@ -22,3 +22,25 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  emtl:
+    build:
+      context: .
+      dockerfile: emtl.Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql://user:pass@db:5432/mydb
+      DJANGO_SETTINGS_MODULE: emtl_site.settings_prod
+      DJANGO_DEBUG: "0"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_PUBLIC_HOST: localhost
+      DJANGO_SECRET_KEY: dev-only-secret-do-not-use-in-prod
+      EMTL_CHATBOT_PROVIDER: unconfigured
+      EMTL_STAGE_PROVIDER: unconfigured
+      EMTL_WORKFLOW_REPOSITORY: unconfigured
+      EMTL_ARTIFACT_STORE: local
+      EMTL_LOCAL_ARTIFACT_ROOT: /tmp/emtl-artifacts
+    depends_on:
+      db:
+        condition: service_healthy

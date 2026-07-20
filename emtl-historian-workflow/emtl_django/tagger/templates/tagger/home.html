@@ -1,0 +1,121 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EMTL Tagger Workbench</title>
+  <link rel="stylesheet" href="{% static 'tagger/workbench.css' %}">
+</head>
+<body>
+  {% include "tagger/_site_header.html" %}
+
+  <main class="workbench-shell home-shell">
+    <section class="landing-panel">
+      <div class="landing-copy">
+        <p class="landing-brand">Early Modern Text Lab</p>
+        <h2>Turn historical source documents into structured, reviewable research data.</h2>
+        <p>
+          Upload a document, choose the outputs you need, and move through a guided workflow for summaries, clauses, entities, Events, Occurrences, and assembled tags.
+        </p>
+        <p class="prototype-note">
+          Each stage can be reviewed before it is passed downstream, so automated assistance remains under the historian's control.
+        </p>
+      </div>
+
+      <section class="start-card" aria-label="Start with a document">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Start</p>
+            <h3>Start with a document</h3>
+          </div>
+          {% if active_document_payload %}
+            <span class="status-badge loaded">Ready</span>
+          {% else %}
+            <span class="status-badge">Waiting</span>
+          {% endif %}
+        </div>
+        <p class="start-card-copy">Upload a source text to begin a staged tagging workflow.</p>
+
+        <div class="start-actions">
+          <form method="post" enctype="multipart/form-data" class="home-upload-form auto-upload-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="upload_document">
+            <label class="file-picker">
+              <span>Upload document</span>
+              <input type="file" name="document_file" accept=".txt,.md,.csv,.xml,.html,.htm,.doc,.docx,.pdf">
+            </label>
+            <button type="submit" class="secondary-button upload-submit-fallback">Upload document</button>
+            <span class="upload-status-text" aria-live="polite"></span>
+          </form>
+        </div>
+
+        {% if home_notice %}
+          <div class="inline-notice" role="status">{{ home_notice }}</div>
+        {% endif %}
+
+        {% if active_document_payload %}
+          <article class="selected-document-card">
+            <p class="eyebrow">Document uploaded</p>
+            <strong>{{ active_document_payload.title }}</strong>
+            <p class="muted">Ready for tagging workflow</p>
+            {% if active_document_payload.upload_extraction_note %}
+              <p class="muted">{{ active_document_payload.upload_extraction_note }}</p>
+            {% endif %}
+          </article>
+
+          <div class="start-workflow-row">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="start_workflow">
+              <input type="hidden" name="reset_workflow" value="1">
+              <button type="submit">Start tagging workflow</button>
+            </form>
+            {% if workflow_started %}
+              <a class="secondary-button" href="{% url 'tagger:live_workbench' %}">Resume current workflow</a>
+            {% endif %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="clear_document">
+              <button type="submit" class="ghost-button">Clear</button>
+            </form>
+          </div>
+        {% else %}
+          <p class="start-disabled">Upload a document before starting the workflow.</p>
+        {% endif %}
+      </section>
+    </section>
+
+    <section class="workflow-overview" aria-label="How the workflow works">
+      <article>
+        <span>Upload</span>
+        <p>Upload the source document you want to analyse.</p>
+      </article>
+      <article>
+        <span>Choose outputs</span>
+        <p>Select individual bots or the complete workflow; required earlier stages are included automatically.</p>
+      </article>
+      <article>
+        <span>Check / Continue</span>
+        <p>Accept, edit, reject, or propose records before approved data moves downstream.</p>
+      </article>
+      <article>
+        <span>Export</span>
+        <p>Download structured stage outputs and the complete versioned workflow package.</p>
+      </article>
+    </section>
+
+    <section class="prototype-status">
+      <div>
+        <h3>One connected research workflow</h3>
+        <p>Document preparation, bot generation, controlled-vocabulary matching, and review stay linked from start to finish.</p>
+      </div>
+      <div>
+        <h3>Designed for collaborative research</h3>
+        <p>Review decisions and provenance travel with the data, ready for shared storage and later platform integration.</p>
+      </div>
+    </section>
+  </main>
+  <script src="{% static 'tagger/workbench.js' %}"></script>
+</body>
+</html>

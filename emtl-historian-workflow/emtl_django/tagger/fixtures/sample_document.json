@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "doc_id": "E-133-2-211_dep01",
+    "record_id": "TNA-E-0094",
+    "archival_reference": "E 133/2/211",
+    "archive_or_library": "TNA",
+    "title": "The Queen v. Joan Laxton",
+    "document_title": "Deposition of Bartholomew Kightley",
+    "document_type": "deposition",
+    "originating_body": "Court of Exchequer",
+    "plaintiff": "The Queen",
+    "defendant": "Joan Laxton",
+    "normalized_date": "29 May 1574",
+    "topic": "Usury",
+    "source_fixture": "Adapted from legacy E-133-2-211_dep01 sample outputs"
+  },
+  "clauses": [
+    {
+      "clause_id": "0001",
+      "label": "Opening",
+      "text": "Depositions against my Lady Laxton, interrogatories 1574, London. Bartholomew Kightley and others were examined against Lady Laxton for usury."
+    },
+    {
+      "clause_id": "0002",
+      "label": "Deposition setting",
+      "text": "Depositions were taken before John Birche, Esquire, one of the barons of the Queen's Court of Exchequer, on 29 May in the sixteenth year of Elizabeth."
+    },
+    {
+      "clause_id": "0003",
+      "label": "Deponent",
+      "text": "Bartholomew Kightley of Clement's Inn in Middlesex, gentleman, about forty years of age, was sworn and examined."
+    },
+    {
+      "clause_id": "0004",
+      "label": "Debt",
+      "text": "Francis Kightley died indebted to Lady Laxton, widow, in the sum of five hundred pounds, borrowed for the use of the old Lord Marquess of Winchester."
+    },
+    {
+      "clause_id": "0005",
+      "label": "Forbearance request",
+      "text": "Bartholomew Kightley, with William Beswicke and Robert Thomson, became suitors to Lady Laxton and asked her to forbear the five hundred pounds until 22 December."
+    },
+    {
+      "clause_id": "0006",
+      "label": "New bonds",
+      "text": "Lady Laxton agreed to forbear the sum, and it was concluded that new bonds should be entered for her better assurance."
+    },
+    {
+      "clause_id": "0007",
+      "label": "Damask demand",
+      "text": "Lady Laxton demanded damask to make her a gown, saying Francis Kightley had given it to her on his deathbed."
+    },
+    {
+      "clause_id": "0008",
+      "label": "Payment for forbearance",
+      "text": "When Bartholomew Kightley, William Beswicke, and Robert Thomson sealed the bonds, twenty-five pounds was paid to Lady Laxton for the forbearance."
+    },
+    {
+      "clause_id": "0009",
+      "label": "Damask delivery",
+      "text": "At the sealing they gave Lady Laxton eight and a half yards of damask, bought and paid for in her house."
+    },
+    {
+      "clause_id": "0010",
+      "label": "Velvet payment",
+      "text": "After the payment and delivery of the damask, Bartholomew Kightley gave Lady Laxton fifty shillings toward velvet to guard her gown."
+    },
+    {
+      "clause_id": "0011",
+      "label": "Servant payment",
+      "text": "Twenty shillings were given to Edmonde, servant to Lady Laxton, for his travel and friendship with her."
+    },
+    {
+      "clause_id": "0012",
+      "label": "Subscription",
+      "text": "The deposition closes with Bartholomew Kightley and John Birche."
+    }
+  ]
+}

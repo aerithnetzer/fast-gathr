@@ -1,0 +1,16 @@
+<header class="site-header">
+  <div class="site-identity">
+    <a class="site-brand-link" href="{% url 'tagger:home' %}" aria-label="Early Modern Text Lab home">
+      EARLY MODERN TEXT LAB
+    </a>
+    {% if page_title %}
+      <span class="site-page-title">{{ page_title }}</span>
+    {% endif %}
+  </div>
+  <nav class="top-nav" aria-label="Primary">
+    <a class="{% if nav_active == 'home' %}active{% endif %}" href="{% url 'tagger:home' %}">Home</a>
+    <a class="{% if nav_active == 'tagger' %}active{% endif %}" href="{% url 'tagger:workbench' %}">Tagger</a>
+    <a class="{% if nav_active == 'data' %}active{% endif %}" href="{% url 'tagger:data' %}">Data</a>
+    <a class="{% if nav_active == 'corpus' %}active{% endif %}" href="{% url 'tagger:corpus' %}">Corpus</a>
+  </nav>
+</header>

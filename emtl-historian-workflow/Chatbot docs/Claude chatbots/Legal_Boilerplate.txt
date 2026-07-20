@@ -1,0 +1,97 @@
+Exclusions								
+								
+The following phrases make up a non-exhaustive list of legal boilerplate. Do not tag them as Events. However, if one of these phrases introduces or accompanies genuinely substantive content (a specific act, transaction, date, person, place), tag that content — not the boilerplate frame.								
+								
+according to justice and equity								
+according to the order of this honorable court								
+against all law, reason, and equity								
+against all right, equity, and good conscience								
+altogether untrue								
+And more to that Interrogatory he cannot depose								
+and thereupon to order and decree								
+and your maiestes said Subiecte shall euer praye for your maiestes most happy Raigne long to Continew ouer vs								
+as appeareth by record								
+as by the Comp̅ltes bill is most falsly alledged	
+as by the same more plainly appeareth							
+as equity requireth								
+as far as he remembereth								
+as he believeth								
+as he hath been informed								
+as he hath heard; as he hath heard say								
+as he sayeth								
+as he thinketh								
+as he thinketh; as he conceyveth								
+as he verely beleueth to be true								
+as he verily believeth								
+as is supposed								
+as to your honor shall seem meet								
+cannot otherwise depose								
+contrary to equity and good conscience								
+declare at Lardge the Trueth of your knowledge 								
+doe you knowe or haue heard 								
+for his better remembrance								
+for the better satisfaction of								
+graunte vnto your said Subiecte your Highnesse most gracious write of Suppena								
+he canne saye no more therin then that he hathe alredye deposed								
+he knoweth not otherwise								
+heires or executors; heirs or executors; executors or administrators								
+In all humblenes 								
+in all reason and conscience								
+in most humble manner								
+in tender consideration whereof								
+in this cause; in this matter; in this suit								
+is ready to aver								
+is true to the best of his knowledge								
+Item to the fyfte & sixt he can say nothinge 								
+knowe you that to be true								
+may it therefore please your honor								
+maye it therfore please your most excellent maiesty the premisses Considered								
+meet and agreeable to conscience								
+more to the same Interrogatory he cannot depose								
+most dutifully sheweth								
+most untruly alleged								
+much prejudiced								
+playnlye affirme & saie								
+praye for your maiestes most happy Raigne long to Continew ouer vs								
+or thereabouts
+Requiring and straightly commaunding him at a certaine daye and vnder a certaine paine therin to be limited to be and personally to appeare before your highnes and the right honorable the lordes and others in your maiestes highe								
+saith that he knoweth not otherwise								
+saving to himself all advantages								
+so it is may it please								
+the effect whereof followeth								
+the sayd deponent further sayeth not								
+the sayd deponent further sayeth not; further sayeth not								
+the truth whereof he referreth to be tryed								
+then and ther to aunswer vnto the premisses and to receiue there such exemplary punishment as to your maiesty and the said Noble lordes shalbe thought most fitting and Convenient,								
+this defendant answereth								
+this defendant denieth								
+this defendant saith								
+to appeare and answere								
+to be directed to the said defendant								
+to graunt your orator the King’s / Queen’s most gracious writ of Subpoena								
+to his great loss and damage								
+to his great trouble and charge								
+to his remembrance; to the best of his remembrance								
+to his utter undoing (unless paired with specific economic harm)								
+to speake the truth; the whole truth and nothing but the truth								
+To the ... Interrogatory he saith								
+To the kinges most excellent maiestye								
+To the queens most excellent maiestye; To the quenes most excellent maiestye								
+to your knowledge or remembraunce								
+utterly false								
+verely perswaded; verely thinketh; verely beleueth								
+very grievous								
+vppon his corporall oathe taken and sworne								
+vppon his oathe; vppon their oathes; uppon his oathe								
+vppon his othe; vpon his oath								
+Whether doe you knowe 								
+without cause								
+without delay or further trouble								
+without just ground								
+without that that								
+your honor’s most bounden								
+your most excellent maiestye								
+your most humble subject								
+your poor orator								
+your said suppliant								
+your whole knowledge therein								
