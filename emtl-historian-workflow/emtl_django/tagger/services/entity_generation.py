@@ -18,6 +18,7 @@ from .contracts import (
     ProviderApiPayload,
     ProviderLabel,
     StageExecutionResult,
+    normalize_provider_label,
     now_iso,
 )
 from .entity_gpu_preflight import (
@@ -66,6 +67,9 @@ class EntityControlledGenerationRunner:
         expected_provider_version: str | None = None,
     ) -> None:
         self.client = client or local_controlled_generation_client()
+        self.provider_label = normalize_provider_label(
+            getattr(self.client, "provider_name", ENTITY_ALLOWED_PROVIDER)
+        )
         self.preflight_runner = preflight_runner or EntityGpuPreflightRunner(
             client=self.client
         )
@@ -160,6 +164,22 @@ class EntityControlledGenerationRunner:
                 "duplicate_entity_request",
                 f"This Entity request ID has already been submitted: {cleaned_request_id}",
             ) from exc
+
+        # Bedrock (managed model) path: the GPU-hardware health/tokenizer/
+        # readiness gates below do not apply. We still enforce prompt
+        # completeness (local_gate above), fingerprint stability, a single
+        # generate call, and real-execution evidence, then parse+validate the
+        # Entity output exactly as the GPU path does.
+        if self.provider_label == ProviderLabel.AWS_BEDROCK.value:
+            return self._run_bedrock(
+                document=document,
+                stage_output=stage_output,
+                reserved_attempt=reserved_attempt,
+                request=request,
+                preflight_payload=preflight_payload,
+                prompt_fingerprint=prompt_fingerprint,
+                cleaned_request_id=cleaned_request_id,
+            )
 
         health = self.client.health()
         health_errors = _validate_provider_health(
@@ -267,6 +287,81 @@ class EntityControlledGenerationRunner:
         # Exactly one generate call. GpuLocalProviderClient has no retry loop.
         response = self.client.generate(generate_payload.as_dict())
         result = _build_execution_result(
+            response=response,
+            request=request.as_dict(),
+            document=document,
+            prompt_package=preflight_payload.prompt_package,
+            prompt_fingerprint=prompt_fingerprint,
+            health=health.payload,
+            tokenization=tokenization,
+        )
+        persistence = persist_entity_registry_attempt(
+            stage_output=stage_output,
+            result=result,
+            reserved_attempt=reserved_attempt,
+        )
+        return _build_summary(
+            result=result,
+            persistence=persistence.as_dict(),
+            request_id=cleaned_request_id,
+            prompt_package=preflight_payload.prompt_package,
+            tokenization=tokenization,
+            document=document,
+            stage_output=stage_output,
+        )
+
+    def _run_bedrock(
+        self,
+        *,
+        document: Document,
+        stage_output: StageOutput,
+        reserved_attempt: StageExecutionAttempt,
+        request: Any,
+        preflight_payload: ProviderApiPayload,
+        prompt_fingerprint: dict[str, str],
+        cleaned_request_id: str,
+    ) -> dict[str, Any]:
+        """Entity generation via a managed model (Bedrock).
+
+        Skips the GPU-hardware health/tokenizer/readiness gates (which assert
+        local transformers/CUDA state that a managed service cannot provide),
+        but preserves: prompt completeness (already validated by the caller),
+        fingerprint stability across the single generate call, real-execution
+        evidence, and full Entity output parse/validation.
+        """
+        # Token estimate for provenance only (no model call).
+        tokenization = self.client.tokenize_only(preflight_payload.as_dict())
+        health = self.client.health()
+
+        generate_prompt_package = dict(preflight_payload.prompt_package)
+        generate_prompt_package.pop("tokenization_diagnostics", None)
+        generate_payload = ProviderApiPayload(
+            request=request,
+            inputs=preflight_payload.inputs,
+            prompt_package=generate_prompt_package,
+            options={
+                **preflight_payload.options,
+                "tokenization_only": False,
+                "generation_enabled": True,
+                "operation": "entity_registry_controlled_real_generation",
+            },
+        )
+        if _prompt_fingerprint(generate_payload.prompt_package) != prompt_fingerprint:
+            return self._persist_failure(
+                stage_output=stage_output,
+                reserved_attempt=reserved_attempt,
+                request=request.as_dict(),
+                prompt_package=preflight_payload.prompt_package,
+                code="prompt_changed_after_preflight",
+                errors=["The model-visible prompt changed after preflight."],
+                execution_status=ExecutionStatus.VALIDATION_FAILED.value,
+                health=health.payload,
+                tokenization=tokenization,
+            )
+
+        # Exactly one generate call.
+        response = self.client.generate(generate_payload.as_dict())
+        result = _build_bedrock_execution_result(
             response=response,
             request=request.as_dict(),
             document=document,
@@ -548,6 +643,91 @@ def _validate_remote_tokenization(
     if not all(prompt_fingerprint.values()):
         errors.append("final prompt fingerprint is incomplete")
     return errors
+
+
+def _build_bedrock_execution_result(
+    *,
+    response: Any,
+    request: dict[str, Any],
+    document: Document,
+    prompt_package: dict[str, Any],
+    prompt_fingerprint: dict[str, str],
+    health: dict[str, Any],
+    tokenization: Any,
+) -> StageExecutionResult:
+    """Build the Entity StageExecutionResult for a managed-model (Bedrock)
+    generation. Uses a managed-service evidence gate: a completed status with
+    real execution and a non-empty completion, then the same Entity output
+    parse/validation as the GPU path."""
+    provider_provenance = dict((response.metadata or {}).get("provider_provenance") or {})
+    errors = list(response.errors or [])
+    warnings = list(response.warnings or [])
+    payload: dict[str, Any] = {"provider_payload": dict(response.payload or {})}
+    status = str(response.status or ExecutionStatus.ERROR.value)
+
+    entity_validation: dict[str, Any]
+    if status == ExecutionStatus.COMPLETED.value and response.real_chatbot_execution:
+        header, body = _document_header_and_body(document)
+        try:
+            parsed, validation = parse_and_validate_entity_output(
+                response.raw_output,
+                expected_header=header,
+                source_body=body,
+            )
+            entity_validation = validation.as_dict()
+            payload["entity_output"] = parsed.as_dict()
+            if not entity_validation.get("valid"):
+                status = ExecutionStatus.VALIDATION_FAILED.value
+        except Exception as exc:
+            status = ExecutionStatus.VALIDATION_FAILED.value
+            entity_validation = _invalid_validation(
+                [{"code": "entity_output_malformed", "message": str(exc)}]
+            )
+            errors.append({"code": "entity_output_malformed", "message": str(exc)})
+    else:
+        entity_validation = _invalid_validation(
+            errors
+            or [
+                {
+                    "code": "entity_provider_generation_failed",
+                    "message": response.error
+                    or "Provider did not complete real Entity generation.",
+                }
+            ]
+        )
+        if status == ExecutionStatus.COMPLETED.value:
+            status = ExecutionStatus.VALIDATION_FAILED.value
+
+    payload["entity_validation"] = entity_validation
+    provenance = {
+        "contract_version": ENTITY_REAL_GENERATION_CONTRACT,
+        "request": request,
+        "provider": response.provider or ProviderLabel.AWS_BEDROCK.value,
+        "model": response.model,
+        "real_chatbot_execution": bool(response.real_chatbot_execution),
+        "model_call_attempted": bool(response.real_chatbot_execution),
+        "model_call_completed": status != ExecutionStatus.ERROR.value
+        and bool(response.real_chatbot_execution),
+        "prompt_fingerprint": prompt_fingerprint,
+        "provider_health": _redacted_health(health),
+        "tokenizer_preflight": _tokenization_audit(tokenization),
+        "provider_provenance": provider_provenance,
+        "bundle": _bundle_from_prompt_package(prompt_package),
+        "errors": errors,
+    }
+    return StageExecutionResult(
+        status=status,
+        raw_output=response.raw_output,
+        payload=payload,
+        provenance=provenance,
+        error="; ".join(str(e.get("message") or "") for e in errors),
+        provider=response.provider or ProviderLabel.AWS_BEDROCK.value,
+        model=response.model,
+        validation={"entity_output": entity_validation},
+        warnings=warnings,
+        errors=errors,
+        request=request,
+    )
 
 
 def _build_execution_result(

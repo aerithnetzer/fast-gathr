@@ -412,8 +412,14 @@ class ChatbotStageRunner:
             ProviderLabel.AWS_BEDROCK.value,
             ProviderLabel.EXTERNAL_API.value,
         }:
-            provider_impl = BackendStubProvider()
-            response = provider_impl.generate(system_prompt, user_prompt)
+            if provider_label == ProviderLabel.AWS_BEDROCK.value:
+                from .providers.aws_bedrock import BedrockProviderClient
+
+                provider_impl = BedrockProviderClient()
+                response = provider_impl.generate_text(system_prompt, user_prompt)
+            else:
+                provider_impl = BackendStubProvider()
+                response = provider_impl.generate(system_prompt, user_prompt)
         else:
             provider_impl = BackendStubProvider()
             response = provider_impl.generate(system_prompt, user_prompt)

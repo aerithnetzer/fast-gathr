@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
+from tagger.services.providers.aws_bedrock import BedrockProviderClient
 from tagger.services.providers.factory import (
     ProviderIntegrationRequired,
     stage_generation_client,
@@ -19,7 +20,11 @@ class StageProviderFactoryTests(SimpleTestCase):
             with self.assertRaisesRegex(ProviderIntegrationRequired, "No live stage provider"):
                 stage_generation_client()
 
-    def test_aws_selection_points_to_single_adapter_factory(self):
+    def test_aws_bedrock_selection_returns_bedrock_client(self):
         with patch.dict("os.environ", {"EMTL_STAGE_PROVIDER": "aws_bedrock"}):
+            self.assertIsInstance(stage_generation_client(), BedrockProviderClient)
+
+    def test_external_api_selection_still_requires_integration(self):
+        with patch.dict("os.environ", {"EMTL_STAGE_PROVIDER": "external_api"}):
             with self.assertRaisesRegex(ProviderIntegrationRequired, "providers/factory.py"):
                 stage_generation_client()

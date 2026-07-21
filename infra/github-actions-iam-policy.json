@@ -3,6 +3,20 @@
   "Statement": [
 
     {
+      "Sid": "Budgets",
+      "Effect": "Allow",
+      "Action": [
+        "budgets:ViewBudget",
+        "budgets:ModifyBudget",
+        "budgets:CreateBudgetAction",
+        "budgets:DescribeBudgetAction",
+        "budgets:UpdateBudgetAction",
+        "budgets:DeleteBudgetAction"
+      ],
+      "Resource": "*"
+    },
+
+    {
       "Sid": "ECRAuth",
       "Effect": "Allow",
       "Action": [

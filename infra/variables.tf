@@ -171,3 +171,9 @@ variable "emtl_task_memory" {
   type        = number
   default     = 1024
 }
+
+variable "bedrock_model_id" {
+  description = "Bedrock model or inference-profile ID the EMTL app invokes. Current-gen Claude on Bedrock requires a cross-region inference profile (the 'us.' prefix)."
+  type        = string
+  default     = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+}
