@@ -8,10 +8,11 @@
       "Action": [
         "budgets:ViewBudget",
         "budgets:ModifyBudget",
-        "budgets:CreateBudgetAction",
-        "budgets:DescribeBudgetAction",
-        "budgets:UpdateBudgetAction",
-        "budgets:DeleteBudgetAction"
+        "budgets:CreateBudget",
+        "budgets:DeleteBudget",
+        "budgets:TagResource",
+        "budgets:UntagResource",
+        "budgets:ListTagsForResource"
       ],
       "Resource": "*"
     },
